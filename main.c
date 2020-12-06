@@ -21,19 +21,21 @@ const int FU = 6; // 歩
 typedef struct board {
     int state[5][5]; // 盤面全体の情報
     
-    int P1OU;
-    int P1KI;
-    int P1GI;
-    int P1KK;
-    int P1HI;
-    int P1FU;
+    int P1[6]; //P1の駒の場所
+    // int P1OU;
+    // int P1KI;
+    // int P1GI;
+    // int P1KK;
+    // int P1HI;
+    // int P1FU;
     
-    int P2OU;
-    int P2KI;
-    int P2GI;
-    int P2KK;
-    int P2HI;
-    int P2FU;
+    int P2[6]; //P2の駒の場所
+    // int P2OU;
+    // int P2KI;
+    // int P2GI;
+    // int P2KK;
+    // int P2HI;
+    // int P2FU;
 } board;
 
 board g_board;
@@ -71,19 +73,31 @@ void init() {
     g_board.state[4][0] = HI * (-1);
     g_board.state[3][4] = FU * (-1);
 
-    g_board.P1OU = 0;
-    g_board.P1KI = 1;
-    g_board.P1GI = 2;
-    g_board.P1KK = 3;
-    g_board.P1HI = 4;
-    g_board.P1FU = 5;
+    g_board.P1[OU-1] = 0;
+    g_board.P1[KI-1] = 1;
+    g_board.P1[GI-1] = 2;
+    g_board.P1[KK-1] = 3;
+    g_board.P1[HI-1] = 4;
+    g_board.P1[FU-1] = 5;
+    // g_board.P1OU = 0;
+    // g_board.P1KI = 1;
+    // g_board.P1GI = 2;
+    // g_board.P1KK = 3;
+    // g_board.P1HI = 4;
+    // g_board.P1FU = 5;
     
-    g_board.P2OU = 24;
-    g_board.P2KI = 23;
-    g_board.P2GI = 22;
-    g_board.P2KK = 21;
-    g_board.P2HI = 20;
-    g_board.P2FU = 19;
+    g_board.P2[OU-1] = 24;
+    g_board.P2[KI-1] = 23;
+    g_board.P2[GI-1] = 22;
+    g_board.P2[KK-1] = 21;
+    g_board.P2[HI-1] = 20;
+    g_board.P2[FU-1] = 19;
+    // g_board.P2OU = 24;
+    // g_board.P2KI = 23;
+    // g_board.P2GI = 22;
+    // g_board.P2KK = 21;
+    // g_board.P2HI = 20;
+    // g_board.P2FU = 19;
 }
 
 void print() {
@@ -102,17 +116,15 @@ void print() {
 }
 
 int is_finished(board b) {
-    if (b.P1OU < 0 || b.P2OU < 0) return 1;
+    if (b.P1[OU-1] < 0 || b.P2[OU-1] < 0) return 1;
     return 0;
-}
-
-int validate_move(char input[], int turn){
-    
 }
 
 int move_piece(char input[], int turn) {
     int mode = 0, //0:動かす, 1:駒を打つ
     piece_put = 0; // 打つ駒(あれば)
+    int* piece_position = turn==P1?g_board.P1:g_board.P2;
+    int* opp_piece_position = turn==P1?g_board.P2:g_board.P1;
 
     /* 課題の説明で挙げられていた条件
     - 動かすとき
@@ -222,52 +234,57 @@ int move_piece(char input[], int turn) {
         int piece_type = abs(piece);
         int diff_row = next_row - prev_row, diff_col = next_col - prev_col;
         int diff_max = abs(diff_col)>abs(diff_row)?abs(diff_col):abs(diff_row);
+        int next_square = diff_row*5 + diff_col;
 
-        // 【未実装】以下の「実際に駒を動かす」部分
-        if(piece_type == OU){
-            //全方向1マスずつ
+        if(piece_type == OU){ //全方向1マスずつ
             if(diff_max != 1){
                 printf("violation: You can't move OU in this way.\n");
                 return -1;
             }
-        }else if(piece_type == KI || piece_type == GI*10 || piece_type == FU*10){
-            //斜後ろを除き1マスずつ
+            piece_position[OU-1] = next_square;
+        }else if(piece_type == KI){ //斜後ろを除き1マスずつ
             if(diff_max != 1 || ( (diff_row * turn < 0) && (diff_col != 1) )){
-                printf("violation: You can't move KI(or promoted GI/FU) in this way.\n");
+                printf("violation: You can't move KI in this way.\n");
                 return -1;
             }
-        }else if(piece_type == GI){
-            //横と真後を除き1マスずつ
+            piece_position[KI-1] = next_square;
+        }else if(piece_type == GI){ //横と真後を除き1マスずつ
             if(diff_max != 1 || diff_row == 0 || diff_row * turn < 0){
                 printf("violation: You can't move GI in this way.\n");
                 return -1;
             }
-        }else if(piece_type == KK){
-            //斜めだけ
+            piece_position[GI-1] = next_square;
+        }else if(piece_type == GI*10){ //斜後ろを除き1マスずつ
+            if(diff_max != 1 || ( (diff_row * turn < 0) && (diff_col != 1) )){
+                printf("violation: You can't move promoted GI in this way.\n");
+                return -1;
+            }
+            piece_position[GI-1] = next_square;
+        }else if(piece_type == KK){ //斜めだけ
             if(abs(diff_row) != abs(diff_col)){
                 printf("violation: You can't move KK in this way.\n");
                 return -1;
             }
-        }else if(piece_type == KK*10){
-            //斜め + 周囲1マスずつ
+            piece_position[KK-1] = next_square;
+        }else if(piece_type == KK*10){ //斜め + 周囲1マスずつ
             if(abs(diff_row) != abs(diff_col) && diff_max != 1){
                 printf("violation: You can't move promoted KK in this way.\n");
                 return -1;
             }
-        }else if(piece_type == HI){
-            //縦横だけ
+            piece_position[KK-1] = next_square;
+        }else if(piece_type == HI){ //縦横だけ
             if(diff_row * diff_col != 0){
                 printf("violation: You can't move HI in this way.\n");
                 return -1;
             }
-        }else if(piece_type == HI*10){
-            //縦横 + 周囲1マスずつ
+            piece_position[HI-1] = next_square;
+        }else if(piece_type == HI*10){ //縦横 + 周囲1マスずつ
             if(diff_row * diff_col != 0 && diff_max != 1){
                 printf("violation: You can't move promoted HI in this way.\n");
                 return -1;
             }
-        }else if(piece_type == FU){
-            //1つ前のみ
+            piece_position[HI-1] = next_square;
+        }else if(piece_type == FU){ //1つ前のみ
             if(diff_row * turn != 1){
                 printf("violation: You can't move FU in this way.\n");
                 return -1;
@@ -277,9 +294,22 @@ int move_piece(char input[], int turn) {
                 printf("violation: You must promote FU when possible.\n");
                 return -1;
             }
+        }else if(piece_type == FU*10){
+            if(diff_max != 1 || ( (diff_row * turn < 0) && (diff_col != 1) )){
+                printf("violation: You can't move promoted FU in this way.\n");
+                return -1;
+            }
+            piece_position[FU-1] = next_square;
         }
 
+        //元々の場所を空にする
+        g_board.state[prev_row][prev_col] = EMPTY;
+        g_board.state[next_row][next_col] = piece;
+
         // 【未実装】駒を取る
+        int target_type = abs(target);
+        if(target_type>=10) target_type /= 10;
+        opp_piece_position[target_type-1] = turn==P1?-1:-2;
 
 
         /* 成る場合 */
@@ -297,7 +327,7 @@ int move_piece(char input[], int turn) {
             }
 
             //実際に成る
-            //g_board.state[next_row][next_col] *= 10;
+            g_board.state[next_row][next_col] *= 10;
         }
 
     }else{ // 打つ場合
