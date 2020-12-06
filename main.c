@@ -122,7 +122,7 @@ int is_finished(board b) {
 
 int move_piece(char input[], int turn) {
     int mode = 0, //0:動かす, 1:駒を打つ
-    piece_put = 0; // 打つ駒(あれば)
+    drop = 0; // 打つ駒(あれば)
     int* piece_position = turn==P1?g_board.P1:g_board.P2;
     int* opp_piece_position = turn==P1?g_board.P2:g_board.P1;
 
@@ -148,7 +148,7 @@ int move_piece(char input[], int turn) {
         return -1;
     }
 
-    // 移動元を指定できていなければ反則
+    // 移動元or打つ先を指定できていなければ反則
     if (!('1' <= input[0] && input[0] <= '5' && 'A' <= input[1] && input[1] <= 'E')){
         printf("error: wrong input\n");
         return -1;
@@ -166,22 +166,19 @@ int move_piece(char input[], int turn) {
 
         //打つ駒の指定ができていなければ反則
         if(input[2]=='H'&&input[3]=='I'){
-            piece_put = HI;
+            drop = HI;
         }else if(input[2]=='K'&&input[3]=='K'){
-            piece_put = KK;
+            drop = KK;
         }else if(input[2]=='K'&&input[3]=='I'){
-            piece_put = KI;
+            drop = KI;
         }else if(input[2]=='G'&&input[3]=='I'){
-            piece_put = GI;
+            drop = GI;
         }else if(input[2]=='F'&&input[3]=='U'){
-            piece_put = FU;
+            drop = FU;
         }else{
             printf("error: wrong input\n");
             return -1;
         }
-
-        //【未実装】打つ際の反則
-        //持ち駒にない駒を打とうとする, 打ち歩詰め, 敵陣に持ち駒の歩を打つ
     }
 
     //5文字目が存在したとしたら、Nでなければ反則
@@ -335,12 +332,16 @@ int move_piece(char input[], int turn) {
         int drop_col = input[1] - 'A';
 
         // 打つ先に駒があるなら反則
-        if (g_board.state[drop_row][drop_col] != EMPTY){
+        if(g_board.state[drop_row][drop_col] != EMPTY){
             printf("violation: Don't drop a piece where there is one.\n");
             return -1;
         }
 
-        // 【未実装】持っていない駒を打つと反則
+        // 持っていない駒を打つと反則
+        if((turn==P1 && opp_piece_position[drop-1]!=-1)||(turn==P2 && opp_piece_position[drop-1]!=-2)){
+            printf("violation: You can't drop a piece which you haven't captured.\n");
+            return -1;
+        }
 
         // 歩関連の反則
         if(input[2]=='F'&&input[3]=='U'){
@@ -355,7 +356,7 @@ int move_piece(char input[], int turn) {
                 return -1;
             }
             
-            // 敵陣に持ち駒の歩を打つ
+            // 敵陣に持ち駒の歩を打つと反則
             if((turn==P1 && drop_row>2) || (turn==P2 && drop_row<2)){
                 printf("violation: Don't drop FU in opponent's field.\n");
                 return -1;
@@ -363,6 +364,10 @@ int move_piece(char input[], int turn) {
 
             // 【未実装】打ち歩詰め
         }
+
+        //実際に打つ
+        g_board.state[drop_row][drop_col] = drop;
+        opp_piece_position[drop-1] = drop_row*5 + drop_col;
     }
     
     //【未実装】王手放置
