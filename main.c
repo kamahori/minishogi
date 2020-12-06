@@ -100,17 +100,57 @@ void init() {
     // g_board.P2FU = 19;
 }
 
+void print_piece(int piece_type){
+    if(piece_type == OU){
+        printf("OU");
+    }else if(piece_type == KI){
+        printf("KI");
+    }else if(piece_type == GI){
+        printf("GI");
+    }else if(piece_type == GI*10){
+        printf("GI+");
+    }else if(piece_type == KK){
+        printf("KK");
+    }else if(piece_type == KK*10){
+        printf("KK+");
+    }else if(piece_type == HI){
+        printf("HI");
+    }else if(piece_type == HI*10){
+        printf("HI+");
+    }else if(piece_type == FU){
+        printf("FU");
+    }else if(piece_type == FU*10){
+        printf("FU+");
+    }
+}
+
 void print() {
     if (DEBUG == 0) return;
 
-    printf("   A B C D E\n");
-    printf("  ----------\n");
+    printf("\n     A     B     C     D     E\n");
+    printf("  _______________________________\n");
     for (int i = 0; i < 5; i++) {
-        printf("%d| ", 5 - i);
+        printf("%d |", 5 - i);
         for (int j = 0; j < 5; j++) {
-            printf("%d ", g_board.state[4 - i][j]);
+
+            int piece = g_board.state[4 - i][j];
+            if(piece>0){
+                printf("▲ ");
+            }else if(piece<0){
+                printf("▼ ");
+            }
+            print_piece(abs(piece));
+            if(abs(piece) >= 10){
+            }else if(piece != 0){
+                printf(" ");
+            }else{
+                printf("     ");
+            }
+
+            printf("|");
         }
         printf("\n");
+        printf("  |_____|_____|_____|_____|_____|\n");
     }
     printf("\n");
 }
