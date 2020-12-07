@@ -22,20 +22,7 @@ typedef struct board {
     int state[5][5]; // 盤面全体の情報
     
     int P1[6]; //P1の駒の場所
-    // int P1OU;
-    // int P1KI;
-    // int P1GI;
-    // int P1KK;
-    // int P1HI;
-    // int P1FU;
-    
     int P2[6]; //P2の駒の場所
-    // int P2OU;
-    // int P2KI;
-    // int P2GI;
-    // int P2KK;
-    // int P2HI;
-    // int P2FU;
 } board;
 
 board g_board;
@@ -79,12 +66,6 @@ void init() {
     g_board.P1[KK-1] = 3;
     g_board.P1[HI-1] = 4;
     g_board.P1[FU-1] = 5;
-    // g_board.P1OU = 0;
-    // g_board.P1KI = 1;
-    // g_board.P1GI = 2;
-    // g_board.P1KK = 3;
-    // g_board.P1HI = 4;
-    // g_board.P1FU = 5;
     
     g_board.P2[OU-1] = 24;
     g_board.P2[KI-1] = 23;
@@ -92,12 +73,6 @@ void init() {
     g_board.P2[KK-1] = 21;
     g_board.P2[HI-1] = 20;
     g_board.P2[FU-1] = 19;
-    // g_board.P2OU = 24;
-    // g_board.P2KI = 23;
-    // g_board.P2GI = 22;
-    // g_board.P2KK = 21;
-    // g_board.P2HI = 20;
-    // g_board.P2FU = 19;
 }
 
 void print_piece(int piece_type){
@@ -140,8 +115,7 @@ void print() {
                 printf("▼ ");
             }
             print_piece(abs(piece));
-            if(abs(piece) >= 10){
-            }else if(piece != 0){
+            if(piece != 0 && abs(piece) < 10){
                 printf(" ");
             }else{
                 printf("     ");
@@ -309,7 +283,7 @@ int move_piece(char input[], int turn) {
         
         //駒の種類からしてアウトな動かし方なら反則、そうでなければ動かす
         int piece_type = abs(piece);
-        int next_square = diff_row*5 + diff_col;
+        int next_square = abs(diff_row)*5 + abs(diff_col);
         if(piece_type == OU){ //全方向1マスずつ
             if(dist != 1){
                 printf("violation: You can't move OU in this way.\n");
@@ -368,6 +342,7 @@ int move_piece(char input[], int turn) {
                 printf("violation: You must promote FU when possible.\n");
                 return -1;
             }
+            piece_position[FU-1] = next_square;
         }else if(piece_type == FU*10){
             if(dist != 1 || ( (diff_row * turn < 0) && (diff_col != 1) )){
                 printf("violation: You can't move promoted FU in this way.\n");
@@ -380,10 +355,12 @@ int move_piece(char input[], int turn) {
         g_board.state[prev_row][prev_col] = EMPTY;
         g_board.state[next_row][next_col] = piece;
 
-        // 【未実装】駒を取る
+        //駒を取る
         int target_type = abs(target);
         if(target_type>=10) target_type /= 10;
-        opp_piece_position[target_type-1] = turn==P1?-1:-2;
+        if(target != EMPTY){
+            opp_piece_position[target_type-1] = turn==P1?-1:-2;
+        }
 
 
         /* 成る場合 */
@@ -494,6 +471,7 @@ int main(int argc, char* argv[]) {
         while (1) {
             print();
             // human's turn
+            printf("P1's turn: ");
             res = get_input(P1);
             if(res==-1) youLose();
             cnt++;
@@ -501,6 +479,7 @@ int main(int argc, char* argv[]) {
             if(is_finished(g_board)) youWin();
 
             // computer's turn
+            printf("P2's turn: ");
             res = compute_output(P2);
             if(res==-1) youWin();
             cnt++;
@@ -513,6 +492,7 @@ int main(int argc, char* argv[]) {
         while (1) {
             print();
             // computer's turn
+            printf("P1's turn: ");
             res = compute_output(P1);
             if(res==-1) youWin();
             cnt++;
@@ -520,6 +500,7 @@ int main(int argc, char* argv[]) {
             if(is_finished(g_board)) youLose();
 
             // human's turn
+            printf("P2's turn: ");
             res = get_input(P2);
             if(res==-1) youLose();
             cnt++;
