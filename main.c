@@ -152,7 +152,32 @@ void print() {
         printf("\n");
         printf("  |_____|_____|_____|_____|_____|\n");
     }
-    printf("\n");
+
+    printf("\nP1(▲): ");
+    int empty_check = 1;
+    for(int i=0;i<6;i++){
+        if(g_board.P2[i]==-1){
+            empty_check = 0;
+            print_piece(i+1);
+            printf(" ");
+        }
+    }
+    if(empty_check == 1)
+        printf("(no piece)");
+        
+    empty_check = 1;
+    printf("\nP2(▼): ");
+    for(int i=0;i<6;i++){
+        if(g_board.P1[i]==-2){
+            empty_check = 0;
+            print_piece(i+1);
+            printf(" ");
+        }
+    }
+    if(empty_check == 1)
+        printf("(no piece)");
+
+    printf("\n\n");
 }
 
 int is_finished(board b) {
