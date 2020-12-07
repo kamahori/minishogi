@@ -154,11 +154,6 @@ void print() {
     printf("\n\n");
 }
 
-int is_finished(board b) {
-    if (b.P1[OU-1] < 0 || b.P2[OU-1] < 0) return 1;
-    return 0;
-}
-
 int move_piece(char input[], int turn) {
     int mode = 0, //0:動かす, 1:駒を打つ
     drop = 0; // 打つ駒(あれば)
@@ -426,8 +421,9 @@ int move_piece(char input[], int turn) {
     
     //【未実装】王手放置
 
-    // returnの値は現状は1で固定
-    return 1;
+    //勝敗が決まれば1, そうでなければ0
+    if (g_board.P1[OU-1] < 0 || g_board.P2[OU-1] < 0) return 1;
+    return 0;
 }
 
 int get_input(int turn) {
@@ -473,17 +469,25 @@ int main(int argc, char* argv[]) {
             // human's turn
             printf("P1's turn: ");
             res = get_input(P1);
-            if(res==-1) youLose();
+            if(res == 1){
+                print();
+                youWin();
+            }else if(res == -1){
+                youLose();
+            }
             cnt++;
-            print();
-            if(is_finished(g_board)) youWin();
 
+            print();
             // computer's turn
-            printf("P2's turn: ");
+            printf("P1's turn: ");
             res = compute_output(P2);
-            if(res==-1) youWin();
+            if(res == 1){
+                print();
+                youLose();
+            }else if(res == -1){
+                youWin();
+            }
             cnt++;
-            if(is_finished(g_board)) youLose();
 
             if(cnt >= 150) Even();
         }
@@ -494,17 +498,25 @@ int main(int argc, char* argv[]) {
             // computer's turn
             printf("P1's turn: ");
             res = compute_output(P1);
-            if(res==-1) youWin();
+            if(res == 1){
+                print();
+                youLose();
+            }else if(res == -1){
+                youWin();
+            }
             cnt++;
-            print();
-            if(is_finished(g_board)) youLose();
 
+            print();
             // human's turn
             printf("P2's turn: ");
             res = get_input(P2);
-            if(res==-1) youLose();
+            if(res == 1){
+                print();
+                youWin();
+            }else if(res == -1){
+                youLose();
+            }
             cnt++;
-            if(is_finished(g_board)) youWin();
 
             if(cnt >= 150) Even();
         }
