@@ -115,10 +115,10 @@ void print() {
                 printf("▼ ");
             }
             print_piece(abs(piece));
-            if(piece != 0 && abs(piece) < 10){
-                printf(" ");
-            }else{
+            if(piece == 0){
                 printf("     ");
+            }else if(abs(piece) < 10){
+                printf(" ");
             }
 
             printf("|");
@@ -415,7 +415,7 @@ int move_piece(char input[], int turn) {
         }
 
         //実際に打つ
-        g_board.state[drop_row][drop_col] = drop;
+        g_board.state[drop_row][drop_col] = drop * turn;
         opp_piece_position[drop-1] = drop_row*5 + drop_col;
     }
     
@@ -479,7 +479,7 @@ int main(int argc, char* argv[]) {
 
             print();
             // computer's turn
-            printf("P1's turn: ");
+            printf("P2's turn: ");
             res = compute_output(P2);
             if(res == 1){
                 print();
