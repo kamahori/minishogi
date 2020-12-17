@@ -604,8 +604,19 @@ int move_piece(char input[], int turn) {
         //駒を取る
         int target_type = abs(target);
         if(target_type>=10) target_type /= 10;
+        /*
         if(target != EMPTY){
             opp_piece_position[target_type-1] = turn==P1?-1:-2;
+        }*/
+        for (int k=0; k<6; k++){
+            if (g_board.P1[k] == abs(target)){
+                g_board.P1[k] = turn==P1?-1:-2;
+            }
+        }
+        for (int k=0; k<6; k++){
+            if (g_board.P2[k] == abs(target)){
+                g_board.P2[k] = turn==P1?-1:-2;
+            }
         }
 
 
