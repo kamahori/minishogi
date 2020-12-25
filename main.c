@@ -352,7 +352,7 @@ int judge_tsumi(int turn)
                     i_ = movelist[k] / 5;
                     j_ = movelist[k] % 5;
                     temp = g_board.state[i_][j_];
-                    g_board.state[i_][j_] = abs(g_board.state[i][j]);
+                    g_board.state[i_][j_] = g_board.state[i][j];
                     g_board.state[i][j] = 0;
                     //動かしてみて
                     if (!judge_check(-turn)){
@@ -370,7 +370,7 @@ int judge_tsumi(int turn)
         }
     }
     //どの持ち駒を配置しても王手。
-    if (turn == 1){ //プレイヤー１のターンだったら
+    if (turn == P1){ //プレイヤー１のターンだったら
         for (int k=0; k<6; k++){
             if (g_board.P1[k] == -2 || g_board.P2[k] == -2){
                 //piece_typeがk+1の駒が、k+1がP2の持ち駒にあったら、
@@ -381,12 +381,13 @@ int judge_tsumi(int turn)
                             //EMPTYの場所があったら、
                             g_board.state[i][j] = -piecetype;
                             //相手(P2)のコマをおいてみて
-                            if (!judge_check(-turn)){
+                            if (!judge_check(P1)){
                                 //もし王手でなかったら詰みでない。
                                 res = 0;
                             }
-                            g_board.state[i][j] = 0;
+                            g_board.state[i][j] = EMPTY;
                             //盤面を元に戻す。
+                            if (res == 0) return 0;
                         }
                     }
                 }
@@ -400,16 +401,17 @@ int judge_tsumi(int turn)
                 int piecetype = k+1;
                 for (int i=0; i<5; i++){
                     for (int j=0; j<5; j++){
-                        if (g_board.state[i][j] == 0){
+                        if (g_board.state[i][j] == EMPTY){
                             //EMPTYの場所があったら、
                             g_board.state[i][j] = piecetype;
                             //相手(P1)のコマをおいてみて
-                            if (!judge_check(-turn)){
+                            if (!judge_check(P2)){
                                 //もし王手でなかったら詰みでない。
                                 res = 0;
                             }
-                            g_board.state[i][j] = 0;
+                            g_board.state[i][j] = EMPTY;
                             //盤面を元に戻す。
+                            if (res == 0) return 0;
                         }
                     }
                 }
@@ -417,7 +419,7 @@ int judge_tsumi(int turn)
         }
     }
     //どのパターンでも王手でなかったら詰み。
-    return res;
+    return 1;
 }
 
 int move_piece(char input[], int turn) {
