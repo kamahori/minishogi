@@ -152,6 +152,22 @@ void print() {
         printf("(no piece)");
 
     printf("\n\n");
+
+    printf("P1OU: %d\n", g_board.P1[OU-1]);
+    printf("P1KI: %d\n", g_board.P1[KI-1]);
+    printf("P1GI: %d\n", g_board.P1[GI-1]);
+    printf("P1KK: %d\n", g_board.P1[KK-1]);
+    printf("P1HI: %d\n", g_board.P1[HI-1]);
+    printf("P1FU: %d\n", g_board.P1[FU-1]);
+    printf("--\n");
+    printf("P2OU: %d\n", g_board.P2[OU-1]);
+    printf("P2KI: %d\n", g_board.P2[KI-1]);
+    printf("P2GI: %d\n", g_board.P2[GI-1]);
+    printf("P2KK: %d\n", g_board.P2[KK-1]);
+    printf("P2HI: %d\n", g_board.P2[HI-1]);
+    printf("P2FU: %d\n", g_board.P2[FU-1]);
+    
+    printf("\n\n");
 }
 
 int abs(int x){return (x>0)? x:-x;}
@@ -529,7 +545,7 @@ int move_piece(char input[], int turn) {
         
         //駒の種類からしてアウトな動かし方なら反則、そうでなければ動かす
         int piece_type = abs(piece);
-        int next_square = abs(diff_row)*5 + abs(diff_col);
+        int next_square = abs(next_row)*5 + abs(next_col);
         if(piece_type == OU){ //全方向1マスずつ
             if(dist != 1){
                 printf("violation: You can't move OU in this way.\n");
@@ -537,19 +553,19 @@ int move_piece(char input[], int turn) {
             }
             piece_position[OU-1] = next_square;
         }else if(piece_type == KI){ //斜後ろを除き1マスずつ
-            if(dist != 1 || ( (diff_row * turn < 0) && (diff_col != 1) )){
+            if(dist != 1 || ( (diff_row * turn < 0) && (diff_col == 1) )){
                 printf("violation: You can't move KI in this way.\n");
                 return -1;
             }
             piece_position[KI-1] = next_square;
         }else if(piece_type == GI){ //横と真後を除き1マスずつ
-            if(dist != 1 || diff_row == 0 || diff_row * turn < 0){
+            if(dist != 1 || diff_row == 0 || (diff_row * turn < 0 && diff_col == 0)){
                 printf("violation: You can't move GI in this way.\n");
                 return -1;
             }
             piece_position[GI-1] = next_square;
         }else if(piece_type == GI*10){ //斜後ろを除き1マスずつ
-            if(dist != 1 || ( (diff_row * turn < 0) && (diff_col != 1) )){
+            if(dist != 1 || ( (diff_row * turn < 0) && (diff_col == 1) )){
                 printf("violation: You can't move promoted GI in this way.\n");
                 return -1;
             }
@@ -590,7 +606,7 @@ int move_piece(char input[], int turn) {
             }
             piece_position[FU-1] = next_square;
         }else if(piece_type == FU*10){
-            if(dist != 1 || ( (diff_row * turn < 0) && (diff_col != 1) )){
+            if(dist != 1 || ( (diff_row * turn < 0) && (diff_col == 1) )){
                 printf("violation: You can't move promoted FU in this way.\n");
                 return -1;
             }
@@ -609,12 +625,14 @@ int move_piece(char input[], int turn) {
             opp_piece_position[target_type-1] = turn==P1?-1:-2;
         }*/
         for (int k=0; k<6; k++){
-            if (g_board.P1[k] == abs(target)){
+            if (turn == P1) break;
+            if (g_board.P1[k] == next_row * 5 + next_col){
                 g_board.P1[k] = turn==P1?-1:-2;
             }
         }
         for (int k=0; k<6; k++){
-            if (g_board.P2[k] == abs(target)){
+            if (turn == P2) break;
+            if (g_board.P2[k] == next_row * 5 + next_col){
                 g_board.P2[k] = turn==P1?-1:-2;
             }
         }
@@ -668,7 +686,7 @@ int move_piece(char input[], int turn) {
             }
             
             // 敵陣に持ち駒の歩を打つと反則
-            if((turn==P1 && drop_row>2) || (turn==P2 && drop_row<2)){
+            if((turn==P1 && drop_row == 4) || (turn==P2 && drop_row == 0)){
                 printf("violation: Don't drop FU in opponent's field.\n");
                 return -1;
             }
@@ -700,7 +718,7 @@ int move_piece(char input[], int turn) {
         }
     }
     //勝敗が決まれば1, そうでなければ0
-    if (g_board.P1[OU-1] < 0 || g_board.P2[OU-1] < 0) return 1;
+    if (g_board.P1[OU-1] == -2 || g_board.P2[OU-1] == -1) return 1;
     return 0;
 }
 
