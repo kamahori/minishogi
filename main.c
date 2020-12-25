@@ -321,7 +321,7 @@ int judge_check(int turn){
                 int index=0;
                 while (movelist[index] != '\0'){
                     if  (opposite_ou_place == movelist[index]){
-                        printf("CHECKMATE!!");
+                        //printf("CHECKMATE!!");
                         return 1;
                     }
                     index++;
