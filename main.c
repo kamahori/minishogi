@@ -543,6 +543,22 @@ int move_piece(char input[], int turn) {
                 return -1;
             }
         }
+        
+        //駒を取る
+        int target_type = abs(target);
+        if(target_type>=10) target_type /= 10;
+        
+        if(target != EMPTY){
+            //opp_piece_position[target_type-1] = turn==P1?-1:-2;
+            for (int k=0; k<6; k++){
+                if (g_board.P1[k] == next_row * 5 + next_col){
+                    g_board.P1[k] = turn==P1?-1:-2;
+                }
+                if (g_board.P2[k] == next_row * 5 + next_col){
+                    g_board.P2[k] = turn==P1?-1:-2;
+                }
+            }
+        }
 
         
         //駒の種類からしてアウトな動かし方なら反則、そうでなければ動かす
@@ -619,27 +635,7 @@ int move_piece(char input[], int turn) {
         g_board.state[prev_row][prev_col] = EMPTY;
         g_board.state[next_row][next_col] = piece;
 
-        //駒を取る
-        int target_type = abs(target);
-        if(target_type>=10) target_type /= 10;
-        /*
-        if(target != EMPTY){
-            opp_piece_position[target_type-1] = turn==P1?-1:-2;
-        }*/
-        for (int k=0; k<6; k++){
-            if (turn == P1) break;
-            if (g_board.P1[k] == next_row * 5 + next_col){
-                g_board.P1[k] = turn==P1?-1:-2;
-            }
-        }
-        for (int k=0; k<6; k++){
-            if (turn == P2) break;
-            if (g_board.P2[k] == next_row * 5 + next_col){
-                g_board.P2[k] = turn==P1?-1:-2;
-            }
-        }
-
-
+    
         /* 成る場合 */
         if(input_length == 5){
             //成れない手の場合は反則
