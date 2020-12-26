@@ -83,3 +83,41 @@ board_t copy_board(board_t board)
 	}
 	return new;
 }
+
+// ‹î‚ð“®‚©‚·
+board_t do_move(board_t board, move_t move, int turn)
+{
+	board_t next = copy_board(board);
+	BitBoard from = move.from, to = move.to;
+	int fromsq = square(from), tosq = square(to);
+	int piece = move.piece * turn;
+
+	if (from) { // “®‚©‚·
+		next.state[fromsq / 5][fromsq % 5] = EMPTY;
+		next.piecebb[playeridx(turn)][pieceidx(piece)] ^= from;
+		if (move.promoting) {
+			next.state[tosq / 5][tosq % 5] = promote(piece);
+			next.piecebb[playeridx(turn)][pieceidx(promote(piece))] ^= to;
+		}
+		else {
+			next.state[tosq / 5][tosq % 5] = piece;
+			next.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
+		}
+
+		int target = board.state[tosq / 5][tosq % 5];
+		if (target != EMPTY) { // ‹î‚ðŽæ‚é
+			next.piecebb[playeridx(-turn)][pieceidx(target)] ^= to;
+			if (ispromoted(target))
+				target = unpromote(target);
+			next.hand[playeridx(turn)][pieceidx(target)] += 1;
+		}
+	}
+
+	else { // ‘Å‚Â
+		next.hand[playeridx(turn)][pieceidx(piece)] -= 1;
+		next.state[tosq / 5][tosq % 5] = piece;
+		next.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
+	}
+
+	return next;
+}
