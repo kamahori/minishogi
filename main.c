@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -77,8 +77,6 @@ void print_piece(int piece_type) {
 }
 
 void print() {
-    if (DEBUG == 0) return;
-
     printf("\n     A     B     C     D     E\n");
     printf("  _______________________________\n");
     for (int i = 0; i < 5; i++) {
@@ -140,7 +138,7 @@ void print() {
 }
 
 int in_board(int i, int j) { return (0 <= i && i <= 4 && 0 <= j && j <= 4) ? 1 : 0; }
-int possible(int i, int j, int turn) { return (g_board.state[i][j] == 0 || (g_board.state[i][j] * turn < 0)) ? 1 : 0; }
+int possible(int i, int j, int turn) { return (g_board.state[i][j] == EMPTY || (g_board.state[i][j] * turn < 0)) ? 1 : 0; }
 
 const int OU_MOVE[8] = { 0,1,2,3,4,5,6,7 };
 const int KI_MOVE[6] = { 1,3,4,5,6,7 };
@@ -190,7 +188,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
     if (piece_type == OU) {
         for (int d = 0; d < 8; d++) {
             int vec[2];
-            if (turn == 1) make_vector(vec, OU_MOVE[d]);
+            if (turn == P1) make_vector(vec, OU_MOVE[d]);
             else make_vector(vec, 7 - OU_MOVE[d]);
             if (in_board(i + vec[0], j + vec[1]) && possible(i + vec[0], j + vec[1], turn)) {
                 movelist[cnt++] = 5 * (i + vec[0]) + j + vec[1];
@@ -200,7 +198,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
     else if (piece_type == KI || piece_type == promote(GI) || piece_type == promote(FU)) {
         for (int d = 0; d < 6; d++) {
             int vec[2];
-            if (turn == 1) make_vector(vec, KI_MOVE[d]);
+            if (turn == P1) make_vector(vec, KI_MOVE[d]);
             else make_vector(vec, 7 - KI_MOVE[d]);
             if (in_board(i + vec[0], j + vec[1]) && possible(i + vec[0], j + vec[1], turn)) {
                 movelist[cnt++] = 5 * (i + vec[0]) + j + vec[1];
@@ -210,7 +208,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
     else if (piece_type == GI) {
         for (int d = 0; d < 5; d++) {
             int vec[2];
-            if (turn == 1) make_vector(vec, GI_MOVE[d]);
+            if (turn == P1) make_vector(vec, GI_MOVE[d]);
             else make_vector(vec, 7 - GI_MOVE[d]);
             if (in_board(i + vec[0], j + vec[1]) && possible(i + vec[0], j + vec[1], turn)) {
                 movelist[cnt++] = 5 * (i + vec[0]) + j + vec[1];
@@ -220,7 +218,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
     else if (piece_type == KK || piece_type == promote(KK)) {
         for (int d = 0; d < 4; d++) {
             int vec[2];
-            if (turn == 1) make_vector(vec, KK_MOVE[d]);
+            if (turn == P1) make_vector(vec, KK_MOVE[d]);
             else make_vector(vec, 7 - KK_MOVE[d]);
             int n = 1;
             while (in_board(i + n * vec[0], j + n * vec[1]) && possible(i + n * vec[0], j + n * vec[1], turn)) {
@@ -232,7 +230,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
         if (piece_type == promote(KK)) {
             for (int d = 0; d < 4; d++) {
                 int vec[2];
-                if (turn == 1) make_vector(vec, HI_MOVE[d]);
+                if (turn == P1) make_vector(vec, HI_MOVE[d]);
                 else make_vector(vec, 7 - HI_MOVE[d]);
                 if (in_board(i + vec[0], j + vec[1]) && possible(i + vec[0], j + vec[1], turn)) {
                     movelist[cnt++] = 5 * (i + vec[0]) + j + vec[1];
@@ -243,7 +241,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
     else if (piece_type == HI || piece_type == promote(HI)) {
         for (int d = 0; d < 4; d++) {
             int vec[2];
-            if (turn == 1) make_vector(vec, HI_MOVE[d]);
+            if (turn == P1) make_vector(vec, HI_MOVE[d]);
             else make_vector(vec, 7 - HI_MOVE[d]);
             int n = 1;
             while (in_board(i + n * vec[0], j + n * vec[1]) && possible(i + n * vec[0], j + n * vec[1], turn)) {
@@ -255,7 +253,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
         if (piece_type == promote(HI)) {
             for (int d = 0; d < 4; d++) {
                 int vec[2];
-                if (turn == 1) make_vector(vec, KK_MOVE[d]);
+                if (turn == P1) make_vector(vec, KK_MOVE[d]);
                 else make_vector(vec, 7 - KK_MOVE[d]);
                 if (in_board(i + vec[0], j + vec[1]) && possible(i + vec[0], j + vec[1], turn)) {
                     movelist[cnt++] = 5 * (i + vec[0]) + j + vec[1];
@@ -265,7 +263,7 @@ void get_possible_movement(int movelist[13], int piece_type, int place, int turn
     }
     else if (piece_type == FU) {
         int vec[2];
-        if (turn == 1) make_vector(vec, FU_MOVE[0]);
+        if (turn == P1) make_vector(vec, FU_MOVE[0]);
         else make_vector(vec, 7 - FU_MOVE[0]);
         if (in_board(i + vec[0], j + vec[1]) && possible(i + vec[0], j + vec[1], turn)) {
             movelist[cnt++] = 5 * (i + vec[0]) + j + vec[1];
@@ -278,8 +276,15 @@ int judge_check(int turn) {
     //王手かどうかを判定する関数
     //王手でなければ0、王手であれば1、を返す。
     //turn のプレイヤーが王手をしているか。
-    int opposite_ou_place;
-    opposite_ou_place = square(g_board.piecebb[playeridx(turn)][pieceidx(OU)]); //相手の王の場所
+    int opposite_ou_place; //相手の王の場所
+    // judge_tsumi() では g_board.piecebb の値は更新しないため g_board.piecebb から直接王の位置を求めることはできない
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            if (g_board.state[i][j] == OU * -turn) {
+                opposite_ou_place = 5 * i + j;
+            }
+        }
+    }
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             if (g_board.state[i][j] * turn > 0) {
@@ -337,64 +342,41 @@ int judge_tsumi(int turn)
         }
     }
     //どの持ち駒を配置しても王手。
-    if (turn == P1) { //プレイヤー１のターンだったら
-        for (int k = 0; k < 6; k++) {
-            if (g_board.hand[playeridx(P1)][k] > 0) {
-                //piece_typeがk+1の駒が、P1の持ち駒にあったら、
-                int piecetype = k + 1;
-                for (int i = 0; i < 5; i++) {
-                    for (int j = 0; j < 5; j++) {
-                        if (g_board.state[i][j] == EMPTY) {
-                            //EMPTYの場所があったら、
-                            g_board.state[i][j] = piecetype;
-                            //自分(P1)のコマをおいてみて
-                            if (!judge_check(P2)) {
-                                //もし相手から見て王手でなかったら詰みでない。
-                                res = 0;
-                            }
-                            g_board.state[i][j] = EMPTY;
-                            //盤面を元に戻す。
-                            if (res == 0) return 0;
+    for (int k = 0; k < 6; k++) {
+        if (g_board.hand[playeridx(turn)][k] > 0) {
+            //piece_typeがk+1の駒が、自分の持ち駒にあったら、
+            int piecetype = k + 1;
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 5; j++) {
+                    if (g_board.state[i][j] == EMPTY) {
+                        //EMPTYの場所があったら、
+                        g_board.state[i][j] = piecetype * turn;
+                        //自分のコマをおいてみて
+                        if (!judge_check(-turn)) {
+                            //もし相手から見て王手でなかったら詰みでない。
+                            res = 0;
                         }
+                        g_board.state[i][j] = EMPTY;
+                        //盤面を元に戻す。
+                        if (res == 0) return 0;
                     }
                 }
             }
         }
     }
-    else { // プレイヤー２のターンだったら
-        for (int k = 0; k < 6; k++) {
-            if (g_board.hand[playeridx(P2)][k] > 0) {
-                //piece_typeがk+1の駒が、P2の持ち駒にあったら、
-                int piecetype = k + 1;
-                for (int i = 0; i < 5; i++) {
-                    for (int j = 0; j < 5; j++) {
-                        if (g_board.state[i][j] == EMPTY) {
-                            //EMPTYの場所があったら、
-                            g_board.state[i][j] = -piecetype;
-                            //自分(P2)のコマをおいてみて
-                            if (!judge_check(P2)) {
-                                //もし相手から見て王手でなかったら詰みでない。
-                                res = 0;
-                            }
-                            g_board.state[i][j] = EMPTY;
-                            //盤面を元に戻す。
-                            if (res == 0) return 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
+
     //どのパターンでも王手でなかったら詰み。
     return 1;
 }
 
-int move_piece(char input[], int turn) {
+int is_finished() {
+    return g_board.hand[0][pieceidx(OU)] > 0 || g_board.hand[1][pieceidx(OU)] > 0;
+}
+
+// 無効な動きなら-1、有効な動きなら move に動きを書きこんで0を返す
+int move_piece(move_t* move, char input[], int turn) {
     int mode = 0, //0:動かす, 1:駒を打つ
         drop = 0; // 打つ駒(あれば)
-    int* piece_position = g_board.piecebb[playeridx(turn)];
-    int* opp_piece_position = g_board.piecebb[playeridx(-turn)];
-    int wasChecked = judge_check(-turn);
 
     /* 課題の説明で挙げられていた条件
     - 動かすとき
@@ -518,16 +500,6 @@ int move_piece(char input[], int turn) {
             }
         }
 
-        //駒を取る
-        int target_type = abs(target);
-        if (ispromoted(target_type)) target_type = unpromote(target_type);
-
-        if (target != EMPTY) {
-            g_board.hand[playeridx(turn)][pieceidx(target_type)] += 1;
-            opp_piece_position[pieceidx(target)] ^= bitboard(next_square);
-        }
-
-
         //駒の種類からしてアウトな動かし方なら反則、そうでなければ動かす
         int piece_type = abs(piece);
         if (piece_type == OU) { //全方向1マスずつ
@@ -535,56 +507,48 @@ int move_piece(char input[], int turn) {
                 printf("violation: You can't move OU in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(OU)] ^= bitboard(prev_square);
         }
         else if (piece_type == KI) { //斜後ろを除き1マスずつ
             if (dist != 1 || ((diff_row * turn < 0) && (diff_col != 0))) {
                 printf("violation: You can't move KI in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(KI)] ^= bitboard(prev_square);
         }
         else if (piece_type == GI) { //横と真後を除き1マスずつ
             if (dist != 1 || diff_row == 0 || (diff_row * turn < 0 && diff_col == 0)) {
                 printf("violation: You can't move GI in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(GI)] ^= bitboard(prev_square);
         }
         else if (piece_type == promote(GI)) { //斜後ろを除き1マスずつ
             if (dist != 1 || ((diff_row * turn < 0) && (diff_col != 0))) {
                 printf("violation: You can't move promoted GI in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(promote(GI))] ^= bitboard(prev_square);
         }
         else if (piece_type == KK) { //斜めだけ
             if (abs(diff_row) != abs(diff_col)) {
                 printf("violation: You can't move KK in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(KK)] ^= bitboard(prev_square);
         }
         else if (piece_type == promote(KK)) { //斜め + 周囲1マスずつ
             if (abs(diff_row) != abs(diff_col) && dist != 1) {
                 printf("violation: You can't move promoted KK in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(promote(KK))] ^= bitboard(prev_square);
         }
         else if (piece_type == HI) { //縦横だけ
             if (diff_row * diff_col != 0) {
                 printf("violation: You can't move HI in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(HI)] ^= bitboard(prev_square);
         }
         else if (piece_type == promote(HI)) { //縦横 + 周囲1マスずつ
             if (diff_row * diff_col != 0 && dist != 1) {
                 printf("violation: You can't move promoted HI in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(promote(HI))] ^= bitboard(prev_square);
         }
         else if (piece_type == FU) { //1つ前のみ
             if (diff_row * turn != 1 || diff_col != 0) {
@@ -596,20 +560,17 @@ int move_piece(char input[], int turn) {
                 printf("violation: You must promote FU when possible.\n");
                 return -1;
             }
-            piece_position[pieceidx(FU)] ^= bitboard(prev_square);
         }
         else if (piece_type == promote(FU)) {
             if (dist != 1 || ((diff_row * turn < 0) && (diff_col != 0))) {
                 printf("violation: You can't move promoted FU in this way.\n");
                 return -1;
             }
-            piece_position[pieceidx(promote(FU))] ^= bitboard(prev_square);
         }
 
-        //元々の場所を空にする
-        g_board.state[prev_row][prev_col] = EMPTY;
-        g_board.state[next_row][next_col] = piece;
-
+        move->from = bitboard(prev_square);
+        move->to = bitboard(next_square);
+        move->piece = abs(g_board.state[prev_row][prev_col]);
 
         /* 成る場合 */
         if (input_length == 5) {
@@ -625,18 +586,17 @@ int move_piece(char input[], int turn) {
                 return -1;
             }
 
-            //実際に成る
-            g_board.state[next_row][next_col] = promote(piece);
-            piece_position[pieceidx(promote(piece))] ^= bitboard(next_square);
+            move->promoting = 1;
         }
         else {
-            piece_position[pieceidx(piece)] ^= bitboard(next_square);
+            move->promoting = 0;
         }
 
     }
     else { // 打つ場合
         int drop_row = input[0] - '1';
         int drop_col = input[1] - 'A';
+        int drop_square = drop_row * 5 + drop_col;
 
         // 打つ先に駒があるなら反則
         if (g_board.state[drop_row][drop_col] != EMPTY) {
@@ -669,47 +629,45 @@ int move_piece(char input[], int turn) {
                 return -1;
             }
 
-            // 打ち歩詰め
-            //FUを打ったときに、
-            g_board.state[drop_row][drop_col] = FU * turn;
-            if (judge_tsumi(-turn)) { // 相手が詰む
-                printf("violation: Don't drop FU to TSUMI.\n");
-                return -1;
-            }
+            // 打ち歩詰めの判定は動かした後で
         }
 
-        //実際に打つ
-        g_board.hand[playeridx(turn)][pieceidx(drop)] -= 1;
-        g_board.state[drop_row][drop_col] = drop * turn;
-        piece_position[pieceidx(drop)] ^= bitboard(drop_row * 5 + drop_col);
+        move->from = 0;
+        move->to = bitboard(drop_square);
+        move->piece = drop;
+        move->promoting = 0;
     }
 
-    // 王手放置
-    if (wasChecked) {
-        printf("wasChecked");
-        //王手だったとき、
-        if (judge_check(-turn)) {
-            //王手を放置したら
-            printf("violation: Don't neglect checkmate.\n");
-            return -1;
-        }
-    }
-    //勝敗が決まれば1, そうでなければ0
-    if (g_board.hand[0][pieceidx(OU)] > 0 || g_board.hand[1][pieceidx(OU)] > 0) return 1;
+    // 王手放置の判定は外で
+
     return 0;
 }
 
-int get_input(int turn) {
-    char input[100];
-    scanf("%s", input);
-    return move_piece(input, turn);
+// 王手放置判定
+int judge_outehochi(int turn) {
+    if (judge_check(-turn)) {
+        //王手を放置したら、あるいは自ら自分の王を王手にしたら
+        printf("violation: Don't neglect checkmate.\n");
+        return 1;
+    }
+    return 0;
 }
 
-int compute_output(int turn) {
+// 打ち歩詰め判定
+int judge_uchifuzume(move_t move, int turn) {
+    if (move.from == 0 && move.piece == FU && judge_tsumi(-turn)) {
+        // 歩を打って相手が詰んでいたら
+        printf("violation: Don't drop FU to TSUMI.\n");
+        return 1;
+    }
+    return 0;
+}
+
+int compute_output(move_t* move, int turn) {
     //現状はユーザによる手入力で代替
     char input[100];
     scanf("%s", input);
-    return move_piece(input, turn);
+    return move_piece(move, input, turn);
 }
 
 void youWin() {
@@ -731,7 +689,9 @@ void Even() {
 
 int main(int argc, char* argv[]) {
     init();
-    int cnt = 0, res;
+    int cnt = 0, res, USER_turn;
+    char input[100];
+    move_t move;
 
     if (argc >= 3 && !strcmp(argv[2], "1")) DEBUG = 1;
 
@@ -739,69 +699,48 @@ int main(int argc, char* argv[]) {
         // human plays first
         USER = P1;
         AI = P2;
-        while (1) {
-            print();
-            // human's turn
-            printf("P1's turn: ");
-            res = get_input(USER);
-            if (res == 1) {
-                print();
-                youWin();
-            }
-            else if (res == -1) {
-                youLose();
-            }
-            cnt++;
-
-            print();
-            // computer's turn
-            printf("P2's turn: ");
-            res = compute_output(AI);
-            if (res == 1) {
-                print();
-                youLose();
-            }
-            else if (res == -1) {
-                youWin();
-            }
-            cnt++;
-
-            if (cnt >= 150) Even();
-        }
+        USER_turn = 0;
     }
     else {
         // computer plays first
         AI = P1;
         USER = P2;
-        while (1) {
-            print();
-            // computer's turn
-            printf("P1's turn: ");
-            res = compute_output(AI);
-            if (res == 1) {
-                print();
-                youLose();
-            }
-            else if (res == -1) {
-                youWin();
-            }
-            cnt++;
+        USER_turn = 1;
+    }
 
-            print();
+    if (DEBUG) print();
+    while (1) {
+        if (cnt % 2 == USER_turn) {
             // human's turn
-            printf("P2's turn: ");
-            res = get_input(USER);
-            if (res == 1) {
-                print();
-                youWin();
-            }
-            else if (res == -1) {
-                youLose();
-            }
-            cnt++;
+            if (DEBUG) printf("human(P%d)'s turn: ", (USER == P1) ? 1 : 2);
+            scanf("%s", input);
+            res = move_piece(&move, input, USER);
+            if (res == -1) youLose();
 
-            if (cnt >= 150) Even();
+            g_board = do_move(g_board, move, USER);
+            if (DEBUG) print();
+
+            if (judge_outehochi(USER)) youLose();
+            if (judge_uchifuzume(move, USER)) youLose();
+            if (is_finished()) youWin();
         }
+        else {
+            // computer's turn
+            if (DEBUG) printf("computer(P%d)'s turn: ", (AI == P1) ? 1 : 2);
+            res = compute_output(&move, AI);
+            if (res == -1) youWin();
+
+            g_board = do_move(g_board, move, AI);
+            if (DEBUG) print();
+
+            if (DEBUG) {
+                if (judge_outehochi(AI)) youWin();
+                if (judge_uchifuzume(move, AI)) youWin();
+            }
+            if (is_finished()) youLose();
+        }
+        cnt++;
+        if (cnt >= 150) Even();
     }
 
     return 0;
