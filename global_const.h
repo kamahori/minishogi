@@ -3,6 +3,7 @@
 int DEBUG = 0;
 
 #define max(a, b) (((a)>(b))?(a):(b))
+#define min(a, b) (((a)<(b))?(a):(b))
 #define promote(p) (((p)>0)?((p)+6):((p)-6)) // ¬‚é
 #define unpromote(p) (((p)>0)?((p)-6):((p)+6)) // ¬‚è‚ğ‰ğœ
 #define ispromoted(p) ((p)>=7||(p)<=-7) // ¬‚Á‚Ä‚¢‚é‚©
