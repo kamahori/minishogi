@@ -34,13 +34,12 @@ typedef struct {
     int state[5][5]; // 盤面全体の情報
     int hand[2][6]; // 持ち駒
     BitBoard piecebb[2][10]; // 各コマの位置(bitboard)
+    int turn; // 手番
 } board_t;
 
 board_t g_board;
 // global variable to contain current state
 
-// P2の持ち駒: -2
-//
 //     A  B  C  D  E
 //   ---------------
 // 5| 20 21 22 23 24
@@ -48,8 +47,6 @@ board_t g_board;
 // 3| 10 11 12 13 14
 // 2|  5  6  7  8  9
 // 1|  0  1  2  3  4
-//
-//      P1の持ち駒: -1
 
 typedef struct {
     BitBoard from; // 動かす前

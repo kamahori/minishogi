@@ -61,7 +61,7 @@ int st_code(int key)
     return key % ST_SIZE;
 }
 
-STEntry* st_search(board_t board, int turn)
+STEntry* st_search(board_t board)
 {
     int state = hash_state(board), hand = hash_hand(board);
     int index = st_code(state);
@@ -104,7 +104,7 @@ typedef struct slnode_t {
 
 SLNode* SList = NULL; // 連続王手の千日手判定用リスト
 
-void sl_prepend(board_t board, int turn)
+void sl_prepend(board_t board)
 {
     SLNode* node = (SLNode*)malloc(sizeof(SLNode));
     if (!node) {
@@ -113,13 +113,13 @@ void sl_prepend(board_t board, int turn)
     }
     node->state = hash_state(board);
     node->hand = hash_hand(board);
-    node->ischecking = judge_checkbb(board, turn);
+    node->ischecking = judge_checking(board, board.turn);
     node->next = SList;
     SList = node;
 }
 
 // 連続王手の千日手が成立しているかを返す
-int judge_checking_sennichite(board_t board, int turn)
+int judge_checking_sennichite(board_t board)
 {
     SLNode* node = SList->next;
     int state = hash_state(board), hand = hash_hand(board);
@@ -137,14 +137,14 @@ int judge_checking_sennichite(board_t board, int turn)
 }
 
 // move で動いた後に千日手で負けるプレイヤーの turn を返す
-int judge_sennichite(board_t board, move_t move, int turn)
+int judge_sennichite(board_t board, move_t move)
 {
-    board = do_move(board, move, turn);
-    STEntry* entry = st_search(board, turn);
+    board = do_move(board, move);
+    STEntry* entry = st_search(board);
     if (!entry || entry->sennichite < 3)
         return 0; // 千日手でない
-    if (judge_checking_sennichite(board, turn))
-        return turn; // 王手をかけている方の負け
+    if (judge_checking_sennichite(board))
+        return -board.turn; // 王手をかけている方の負け
     return P1; // 先手の負け
 }
 

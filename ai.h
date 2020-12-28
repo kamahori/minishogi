@@ -9,9 +9,9 @@
 #include "sennichite.h"
 
 // random
-void compute_output(move_t* move, int turn)
+void compute_output(move_t* move)
 {
     move_t movelist[150];
-    int n = get_movelist(movelist, g_board, turn);
+    int n = get_movelist(movelist, g_board);
     *move = movelist[rand() % n];
 }

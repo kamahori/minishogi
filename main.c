@@ -43,6 +43,8 @@ void init() {
             }
         }
     }
+    g_board.turn = P1;
+
     sennichite_init();
 }
 
@@ -377,9 +379,10 @@ int is_finished() {
 }
 
 // 無効な動きなら-1、有効な動きなら move に動きを書きこんで0を返す
-int move_piece(move_t* move, char input[], int turn) {
+int move_piece(move_t* move, char input[]) {
     int mode = 0, //0:動かす, 1:駒を打つ
         drop = 0; // 打つ駒(あれば)
+    int turn = g_board.turn;
 
     /* 課題の説明で挙げられていた条件
     - 動かすとき
@@ -647,8 +650,9 @@ int move_piece(move_t* move, char input[], int turn) {
 }
 
 // 王手放置判定
-int judge_outehochi(int turn) {
-    if (judge_check(-turn)) {
+// 現在の手番のプレイヤーが王手をしているか
+int judge_outehochi() {
+    if (judge_check(g_board.turn)) {
         //王手を放置したら、あるいは自ら自分の王を王手にしたら
         printf("violation: Don't neglect checkmate.\n");
         return 1;
@@ -657,8 +661,9 @@ int judge_outehochi(int turn) {
 }
 
 // 打ち歩詰め判定
-int judge_uchifuzume(move_t move, int turn) {
-    if (move.from == 0 && move.piece == FU && judge_tsumi(-turn)) {
+// 歩を打った後で現在の手番のプレイヤーが詰んでいるか
+int judge_uchifuzume(move_t move) {
+    if (move.from == 0 && move.piece == FU && judge_tsumi(g_board.turn)) {
         // 歩を打って相手が詰んでいたら
         printf("violation: Don't drop FU to TSUMI.\n");
         return 1;
@@ -732,10 +737,10 @@ int main(int argc, char* argv[]) {
             // human's turn
             if (DEBUG) printf("human(P%d)'s turn: ", (USER == P1) ? 1 : 2);
             scanf("%s", input);
-            res = move_piece(&move, input, USER);
+            res = move_piece(&move, input);
             if (res == -1) youLose();
-            loser = judge_sennichite(g_board, move, USER);
-            g_board = do_move(g_board, move, USER);
+            loser = judge_sennichite(g_board, move);
+            g_board = do_move(g_board, move);
             if (DEBUG) print();
             if (loser) {
                 if (DEBUG) printf("sennichite\n");
@@ -743,18 +748,18 @@ int main(int argc, char* argv[]) {
                 else youWin();
             }
             st_insert(g_board);
-            sl_prepend(g_board, USER);
-            if (judge_outehochi(USER)) youLose();
-            if (judge_uchifuzume(move, USER)) youLose();
+            sl_prepend(g_board);
+            if (judge_outehochi()) youLose();
+            if (judge_uchifuzume(move)) youLose();
             if (is_finished()) youWin();
         }
         else {
             // computer's turn
             if (DEBUG) printf("computer(P%d)'s turn: ", (AI == P1) ? 1 : 2);
-            compute_output(&move, AI);
+            compute_output(&move);
             print_move(move);
-            loser = judge_sennichite(g_board, move, AI);
-            g_board = do_move(g_board, move, AI);
+            loser = judge_sennichite(g_board, move);
+            g_board = do_move(g_board, move);
             if (DEBUG) print();
             if (loser) {
                 if (DEBUG) printf("sennichite\n");
@@ -762,9 +767,9 @@ int main(int argc, char* argv[]) {
                 else youWin();
             }
             st_insert(g_board);
-            sl_prepend(g_board, AI);
-            if (judge_outehochi(AI)) youWin();
-            if (judge_uchifuzume(move, AI)) youWin();
+            sl_prepend(g_board);
+            if (judge_outehochi()) youWin();
+            if (judge_uchifuzume(move)) youWin();
             if (is_finished()) youLose();
         }
         cnt++;

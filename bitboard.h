@@ -127,13 +127,12 @@ BitBoard empty(board_t board)
     return (~(occupied(board, P1) | occupied(board, P2))) & ((1 << 25) - 1);
 }
 
-// 駒の動ける場所
+// turn のプレイヤーの駒の動ける場所
 BitBoard get_movable(board_t board, int piece, BitBoard place, int turn)
 {
-    int mir = (turn == -1) ? 1 : 0;
     BitBoard occupied_self = occupied(board, turn);
     BitBoard occupied_all = occupied(board, P1) | occupied(board, P2);
-    if (mir) {
+    if (turn == P2) {
         place = mirrorbb(place);
         occupied_self = mirrorbb(occupied_self);
         occupied_all = mirrorbb(occupied_all);
@@ -173,7 +172,7 @@ BitBoard get_movable(board_t board, int piece, BitBoard place, int turn)
     }
 
     bb = bb & ~occupied_self; // 自分の駒のある場所へは動けない
-    return (mir) ? mirrorbb(bb) : bb;
+    return (turn == P2) ? mirrorbb(bb) : bb;
 }
 
 // turn のプレイヤーの駒が動ける場所すべて
@@ -216,17 +215,19 @@ board_t copy_board(board_t board)
         for (int j = 0; j < 10; j++)
             new.piecebb[i][j] = board.piecebb[i][j];
     }
+    new.turn = board.turn;
     return new;
 }
 
 // 駒を動かす
-board_t do_move(board_t board, move_t move, int turn)
+board_t do_move(board_t board, move_t move)
 {
     board_t next = copy_board(board);
     BitBoard from = move.from, to = move.to;
     int fromsq = square(from), tosq = square(to);
+    int turn = board.turn;
     int piece = move.piece * turn;
-
+    
     if (from) { // 動かす
         next.state[fromsq / 5][fromsq % 5] = EMPTY;
         next.piecebb[playeridx(turn)][pieceidx(piece)] ^= from;
@@ -253,37 +254,40 @@ board_t do_move(board_t board, move_t move, int turn)
         next.state[tosq / 5][tosq % 5] = piece;
         next.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
     }
+    
+    next.turn = -turn;
 
     return next;
 }
 
-// turnのプレイヤーが王手をしているか
-int judge_checkbb(board_t board, int turn)
+// turn のプレイヤーが相手に王手を掛けているか
+int judge_checking(board_t board, int turn)
 {
     return board.piecebb[playeridx(-turn)][pieceidx(OU)] & get_all_movable(board, turn);
 }
 
-int get_movelist(move_t* movelist, board_t board, int turn);
+int get_movelist(move_t* movelist, board_t board);
 
-// turnのプレイヤーが詰んでいるか
-int judge_tsumibb(board_t board, int turn)
+// 現在の手番のプレイヤーが詰んでいるか
+int judge_tsumibb(board_t board)
 {
     move_t movelist[200];
-    int n = get_movelist(movelist, board, turn);
+    int n = get_movelist(movelist, board);
     for (int i = 0; i < n; i++) {
-        if (!judge_checkbb(do_move(board, movelist[i], turn), -turn))
+        if (!judge_checking(do_move(board, movelist[i]), -board.turn)) // 現在の手番が手を指して相手が勝たない
             return 0;
     }
     return 1;
 }
 
-// turn のプレイヤーの可能な手を movelist に入れる
+// 現在の局面での可能な手を movelist に入れる
 // 可能な手の数を返す
-int get_movelist(move_t* movelist, board_t board, int turn)
+int get_movelist(move_t* movelist, board_t board)
 {
     int i = 0;
     BitBoard frombb, tobb;
     move_t move;
+    int turn = board.turn;
     BitBoard self_all_movable = get_all_movable(board, turn); // 自分の駒の利き
     BitBoard opp_all_movable = get_all_movable(board, -turn); // 相手の駒の利き
 
@@ -320,7 +324,7 @@ int get_movelist(move_t* movelist, board_t board, int turn)
             tobb = empty(board);
             if (piece != FU)
                 // 歩以外は相手に取られない場所か相手に取られてもその駒を取り返せる場所に打つ
-                tobb = empty(board) & (~opp_all_movable | (self_all_movable & opp_all_movable));
+                tobb &= ~opp_all_movable | (self_all_movable & opp_all_movable);
             for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
                 move.from = 0; // 打つ場合は from = 0
                 move.to = t;
@@ -331,7 +335,7 @@ int get_movelist(move_t* movelist, board_t board, int turn)
                         || (board.piecebb[playeridx(turn)][pieceidx(FU)] & columnbb(t))) // 二歩
                         continue;
                     if (get_movable(board, piece, t, turn) & board.piecebb[playeridx(-turn)][pieceidx(OU)]) { // 王の前に歩
-                        if (judge_tsumibb(do_move(board, move, turn), -turn)) // 打ち歩詰め
+                        if (judge_tsumibb(do_move(board, move))) // 打ち歩詰め
                             continue;
                     }
                 }
