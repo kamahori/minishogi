@@ -284,12 +284,16 @@ int get_movelist(move_t* movelist, board_t board, int turn)
     int i = 0;
     BitBoard frombb, tobb;
     move_t move;
+    BitBoard self_all_movable = get_all_movable(board, turn); // Ž©•ª‚Ì‹î‚Ì—˜‚«
+    BitBoard opp_all_movable = get_all_movable(board, -turn); // ‘ŠŽè‚Ì‹î‚Ì—˜‚«
 
     // “®‚©‚·
     for (int piece = 1; piece <= 10; piece++) {
         frombb = board.piecebb[playeridx(turn)][pieceidx(piece)];
         for (BitBoard f = frombb & -frombb; frombb; frombb ^= f, f = frombb & -frombb) {
             tobb = get_movable(board, piece, f, turn);
+            if (piece == OU)
+                tobb &= ~opp_all_movable; // ‰¤‚Í‘ŠŽè‚Ì—˜‚«‚ª‚ ‚éêŠ‚É‚Í“®‚©‚¹‚È‚¢
             for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
                 move.from = f;
                 move.to = t;
@@ -311,13 +315,12 @@ int get_movelist(move_t* movelist, board_t board, int turn)
     }
 
     // ‘Å‚Â
-    BitBoard opp_all_movable = get_all_movable(board, -turn); // ‘ŠŽè‚Ì‹î‚Ì—˜‚«
     for (int piece = 1; piece <= 6; piece++) {
         if (board.hand[playeridx(turn)][pieceidx(piece)]) {
-            if (piece == FU)
-                tobb = empty(board);
-            else
-                tobb = empty(board) & ~opp_all_movable; // •àˆÈŠO‚Í‘ŠŽè‚ÉŽæ‚ç‚ê‚éêŠ‚É‚Í‘Å‚½‚È‚¢
+            tobb = empty(board);
+            if (piece != FU)
+                // •àˆÈŠO‚Í‘ŠŽè‚ÉŽæ‚ç‚ê‚È‚¢êŠ‚©‘ŠŽè‚ÉŽæ‚ç‚ê‚Ä‚à‚»‚Ì‹î‚ðŽæ‚è•Ô‚¹‚éêŠ‚É‘Å‚Â
+                tobb = empty(board) & (~opp_all_movable | (self_all_movable & opp_all_movable));
             for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
                 move.from = 0; // ‘Å‚Âê‡‚Í from = 0
                 move.to = t;
