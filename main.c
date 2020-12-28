@@ -28,7 +28,7 @@ void init() {
     g_board.state[3][4] = FU * (-1);
 
     for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 5; j++) {
+        for (int j = 0; j < 6; j++) {
             g_board.hand[i][j] = 0;
         }
         for (int j = 0; j < 10; j++) {
@@ -38,9 +38,7 @@ void init() {
     for (int row = 0; row < 5; row++) {
         for (int col = 0; col < 5; col++) {
             int piece = g_board.state[row][col];
-            if (piece != EMPTY) {
-                g_board.piecebb[playeridx(piece)][pieceidx(piece)] |= bitboard(row * 5 + col);
-            }
+            g_board.piecebb[playeridx(piece)][pieceidx(piece)] |= bitboard(row * 5 + col);
         }
     }
     g_board.turn = P1;
@@ -576,7 +574,8 @@ int move_piece(move_t* move, char input[]) {
 
         move->from = bitboard(prev_square);
         move->to = bitboard(next_square);
-        move->piece = abs(g_board.state[prev_row][prev_col]);
+        move->piece = abs(piece);
+        move->take = abs(target);
 
         /* 成る場合 */
         if (input_length == 5) {
@@ -641,6 +640,7 @@ int move_piece(move_t* move, char input[]) {
         move->from = 0;
         move->to = bitboard(drop_square);
         move->piece = drop;
+        move->take = EMPTY;
         move->promoting = 0;
     }
 

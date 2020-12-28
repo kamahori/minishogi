@@ -227,6 +227,7 @@ board_t do_move(board_t board, move_t move)
     int fromsq = square(from), tosq = square(to);
     int turn = board.turn;
     int piece = move.piece * turn;
+    int target = move.take;
 
     if (from) { // 動かす
         next.state[fromsq / 5][fromsq % 5] = EMPTY;
@@ -240,7 +241,6 @@ board_t do_move(board_t board, move_t move)
             next.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
         }
 
-        int target = board.state[tosq / 5][tosq % 5];
         if (target != EMPTY) { // 駒を取る
             next.piecebb[playeridx(-turn)][pieceidx(target)] ^= to;
             if (ispromoted(target))
@@ -302,6 +302,7 @@ int get_movelist(move_t* movelist, board_t board)
                 move.from = f;
                 move.to = t;
                 move.piece = piece;
+                move.take = abs(board.state[square(t) / 5][square(t) % 5]);
                 if ((piece == FU || piece == KK || piece == HI) && (in_opp_area(f, turn) || in_opp_area(t, turn)))
                     move.promoting = 1; // 歩、角、飛は成れれば必ず成る
                 else
@@ -312,6 +313,7 @@ int get_movelist(move_t* movelist, board_t board)
                     move.to = t;
                     move.piece = piece;
                     move.promoting = 1;
+                    move.take = abs(board.state[square(t) / 5][square(t) % 5]);
                     movelist[i++] = move;
                 }
             }
@@ -329,6 +331,7 @@ int get_movelist(move_t* movelist, board_t board)
                 move.from = 0; // 打つ場合は from = 0
                 move.to = t;
                 move.piece = piece;
+                move.take = EMPTY;
                 move.promoting = 0;
                 if (piece == FU) {
                     if (in_opp_area(t, turn) // 敵陣に歩

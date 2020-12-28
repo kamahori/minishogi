@@ -51,6 +51,7 @@ board_t g_board;
 typedef struct {
     BitBoard from; // 動かす前
     BitBoard to; // 動かした後
-    int piece; // 動かす駒（1～6）
+    int piece; // 動かすor打つ駒（FU～promote(HI)）
+    int take; // 取る駒（FU～promote(HI)）取らない場合はEMPTY
     int promoting; // 成るかどうか
 } move_t;
