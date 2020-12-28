@@ -33,6 +33,8 @@ typedef int BitBoard;
 typedef struct {
     int state[5][5]; // 盤面全体の情報
     int hand[2][6]; // 持ち駒
+    int state_h; // state のハッシュ値
+    int hand_h; // hand のハッシュ値
     BitBoard piecebb[2][10]; // 各コマの位置(bitboard)
     int turn; // 手番
 } board_t;
