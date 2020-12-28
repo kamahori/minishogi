@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "global_const.h"
+#include "sennichite.h"
 
 const BitBoard FU_movable[25] = {
     32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 0, 0, 0, 0, 0,
@@ -112,26 +113,26 @@ int popcount(BitBoard bb)
 }
 
 // turn のプレイヤーの駒のある場所
-BitBoard occupied(board_t board, int turn)
+BitBoard occupied(int turn)
 {
     BitBoard res = 0;
     for (int piece = 0; piece < 10; piece++) {
-        res |= board.piecebb[playeridx(turn)][piece];
+        res |= g_board.piecebb[playeridx(turn)][piece];
     }
     return res;
 }
 
 // 駒のない場所
-BitBoard empty(board_t board)
+BitBoard empty()
 {
-    return (~(occupied(board, P1) | occupied(board, P2))) & ((1 << 25) - 1);
+    return (~(occupied(P1) | occupied(P2))) & ((1 << 25) - 1);
 }
 
 // turn のプレイヤーの駒の動ける場所
-BitBoard get_movable(board_t board, int piece, BitBoard place, int turn)
+BitBoard get_movable(int piece, BitBoard place, int turn)
 {
-    BitBoard occupied_self = occupied(board, turn);
-    BitBoard occupied_all = occupied(board, P1) | occupied(board, P2);
+    BitBoard occupied_self = occupied(turn);
+    BitBoard occupied_all = occupied(P1) | occupied(P2);
     if (turn == P2) {
         place = mirrorbb(place);
         occupied_self = mirrorbb(occupied_self);
@@ -176,22 +177,22 @@ BitBoard get_movable(board_t board, int piece, BitBoard place, int turn)
 }
 
 // turn のプレイヤーの駒が動ける場所すべて
-BitBoard get_all_movable(board_t board, int turn)
+BitBoard get_all_movable(int turn)
 {
     BitBoard res = 0, bb;
     for (int piece = 1; piece <= 10; piece++) {
-        bb = board.piecebb[playeridx(turn)][pieceidx(piece)];
+        bb = g_board.piecebb[playeridx(turn)][pieceidx(piece)];
         for (BitBoard lb = bb & -bb; bb; bb ^= lb, lb = bb & -bb)
-            res |= get_movable(board, piece, lb, turn);
+            res |= get_movable(piece, lb, turn);
     }
     return res;
 }
 
 // bb が相手の陣地にあるか
-int in_opp_area(BitBoard bb, int turn)
+int in_opp_area(BitBoard bb)
 {
     int row = square(bb) / 5;
-    return (turn == 1) ? (row == 4) : (row == 0);
+    return (g_board.turn == P1) ? (row == 4) : (row == 0);
 }
 
 // bb がある列
@@ -201,119 +202,212 @@ BitBoard columnbb(BitBoard bb)
     return 0b0000100001000010000100001 << col;
 }
 
-// board をコピー
-board_t copy_board(board_t board)
+// g_board をコピー
+board_t copy_board()
 {
-    board_t new;
+    board_t copy;
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++)
-            new.state[i][j] = board.state[i][j];
+            copy.state[i][j] = g_board.state[i][j];
     }
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 6; j++)
-            new.hand[i][j] = board.hand[i][j];
+            copy.hand[i][j] = g_board.hand[i][j];
         for (int j = 0; j < 10; j++)
-            new.piecebb[i][j] = board.piecebb[i][j];
+            copy.piecebb[i][j] = g_board.piecebb[i][j];
     }
-    new.turn = board.turn;
-    return new;
+    copy.turn = g_board.turn;
+    copy.state_h = g_board.state_h;
+    copy.hand_h = g_board.hand_h;
+    return copy;
 }
 
-// 駒を動かす
-board_t do_move(board_t board, move_t move)
+// 駒を動かす（g_board を書き換える）
+void do_move(move_t move, int update_hash_value)
 {
-    board_t next = copy_board(board);
     BitBoard from = move.from, to = move.to;
     int fromsq = square(from), tosq = square(to);
-    int turn = board.turn;
+    int turn = g_board.turn;
     int piece = move.piece * turn;
-    int target = move.take;
+    int target = move.take * -turn;
 
     if (from) { // 動かす
-        next.state[fromsq / 5][fromsq % 5] = EMPTY;
-        next.piecebb[playeridx(turn)][pieceidx(piece)] ^= from;
-        if (move.promoting) {
-            next.state[tosq / 5][tosq % 5] = promote(piece);
-            next.piecebb[playeridx(turn)][pieceidx(promote(piece))] ^= to;
-        }
-        else {
-            next.state[tosq / 5][tosq % 5] = piece;
-            next.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
-        }
-
+        g_board.state[fromsq / 5][fromsq % 5] = EMPTY;
+        g_board.piecebb[playeridx(turn)][pieceidx(piece)] ^= from;
         if (target != EMPTY) { // 駒を取る
-            next.piecebb[playeridx(-turn)][pieceidx(target)] ^= to;
+            g_board.piecebb[playeridx(-turn)][pieceidx(target)] ^= to;
             if (ispromoted(target))
                 target = unpromote(target);
-            next.hand[playeridx(turn)][pieceidx(target)] += 1;
+            g_board.hand[playeridx(turn)][pieceidx(target)] += 1;
+        }
+        if (move.promoting) { // 成る
+            g_board.state[tosq / 5][tosq % 5] = promote(piece);
+            g_board.piecebb[playeridx(turn)][pieceidx(promote(piece))] ^= to;
+        }
+        else { // 成らない
+            g_board.state[tosq / 5][tosq % 5] = piece;
+            g_board.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
         }
     }
 
     else { // 打つ
-        next.hand[playeridx(turn)][pieceidx(piece)] -= 1;
-        next.state[tosq / 5][tosq % 5] = piece;
-        next.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
+        g_board.hand[playeridx(turn)][pieceidx(piece)] -= 1;
+        g_board.state[tosq / 5][tosq % 5] = piece;
+        g_board.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
     }
 
-    next.turn = -turn;
+    g_board.turn *= -1;
 
-    return next;
+    if (update_hash_value) {
+        int state_h = g_board.state_h;
+        int hand_h = g_board.hand_h;
+        if (from) { // 動かす
+            state_h ^= hash_seed[hashidx(piece)][fromsq];
+            if (target != EMPTY) { // 駒を取る
+                state_h ^= hash_seed[hashidx(target)][tosq];
+                if (ispromoted(target))
+                    target = unpromote(target);
+                hand_h += hand_hash_seed(turn, abs(target));
+            }
+            if (move.promoting) { // 成る
+                state_h ^= hash_seed[hashidx(promote(piece))][tosq];
+            }
+            else {
+                state_h ^= hash_seed[hashidx(piece)][tosq];
+            }
+        }
+        else { // 打つ
+            state_h ^= hash_seed[hashidx(piece)][tosq];
+            hand_h -= hand_hash_seed(turn, abs(piece));
+        }
+        state_h ^= 1; // turn を入れ替える
+        g_board.state_h = state_h;
+        g_board.hand_h = hand_h;
+    }
+}
+
+// 駒を戻す（g_board を書き換える）
+void undo_move(move_t move, int restore_hash_value)
+{
+    BitBoard from = move.from, to = move.to;
+    int fromsq = square(from), tosq = square(to);
+    int turn = -g_board.turn;
+    int piece = move.piece * turn;
+    int target = move.take * -turn;
+
+    if (from) { // 動いた
+        g_board.state[tosq / 5][tosq % 5] = target;
+        if (target != EMPTY) { // 駒を取った
+            g_board.piecebb[playeridx(-turn)][pieceidx(target)] ^= to;
+            if (ispromoted(target))
+                target = unpromote(target);
+            g_board.hand[playeridx(turn)][pieceidx(target)] -= 1;
+        }
+        if (move.promoting) { // 成った
+            g_board.piecebb[playeridx(turn)][pieceidx(promote(piece))] ^= to;
+        }
+        else { // 成らなかった
+            g_board.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
+        }
+        g_board.state[fromsq / 5][fromsq % 5] = piece;
+        g_board.piecebb[playeridx(turn)][pieceidx(piece)] ^= from;
+    }
+
+    else { // 打った
+        g_board.hand[playeridx(turn)][pieceidx(piece)] += 1;
+        g_board.state[tosq / 5][tosq % 5] = EMPTY;
+        g_board.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
+    }
+
+    g_board.turn *= -1;
+
+    if (restore_hash_value) {
+        int state_h = g_board.state_h;
+        int hand_h = g_board.hand_h;
+        if (from) { // 動いた
+            if (target != EMPTY) { // 駒を取った
+                state_h ^= hash_seed[hashidx(target)][tosq];
+                if (ispromoted(target))
+                    target = unpromote(target);
+                hand_h -= hand_hash_seed(turn, abs(target));
+            }
+            if (move.promoting) { // 成った
+                state_h ^= hash_seed[hashidx(promote(piece))][tosq];
+            }
+            else { // 成らなかった
+                state_h ^= hash_seed[hashidx(piece)][tosq];
+            }
+            state_h ^= hash_seed[hashidx(piece)][fromsq];
+        }
+
+        else { // 打った
+            state_h ^= hash_seed[hashidx(piece)][tosq];
+            hand_h += hand_hash_seed(turn, abs(piece));
+        }
+        state_h ^= 1; // turn を入れ替える
+        g_board.state_h = state_h;
+        g_board.hand_h = hand_h;
+    }
 }
 
 // turn のプレイヤーが相手に王手を掛けているか
-int judge_checking(board_t board, int turn)
+int judge_checking(int turn)
 {
-    return board.piecebb[playeridx(-turn)][pieceidx(OU)] & get_all_movable(board, turn);
+    return g_board.piecebb[playeridx(-turn)][pieceidx(OU)] & get_all_movable(turn);
 }
 
-int get_movelist(move_t* movelist, board_t board);
+int get_movelist(move_t* movelist);
 
 // 現在の手番のプレイヤーが詰んでいるか
-int judge_tsumibb(board_t board)
+int judge_tsumibb()
 {
     move_t movelist[200];
-    int n = get_movelist(movelist, board);
+    int n = get_movelist(movelist);
     for (int i = 0; i < n; i++) {
-        if (!judge_checking(do_move(board, movelist[i]), -board.turn)) // 現在の手番が手を指して相手が勝たない
+        do_move(movelist[i], 0);
+        if (!judge_checking(-g_board.turn)) { // 現在の手番のプレイヤーが手を指して相手が勝たない
+            undo_move(movelist[i], 0);
             return 0;
+        }
+        undo_move(movelist[i], 0);
     }
     return 1;
 }
 
 // 現在の局面での可能な手を movelist に入れる
 // 可能な手の数を返す
-int get_movelist(move_t* movelist, board_t board)
+int get_movelist(move_t* movelist)
 {
     int i = 0;
     BitBoard frombb, tobb;
     move_t move;
-    int turn = board.turn;
-    BitBoard self_all_movable = get_all_movable(board, turn); // 自分の駒の利き
-    BitBoard opp_all_movable = get_all_movable(board, -turn); // 相手の駒の利き
+    int turn = g_board.turn;
+    BitBoard self_all_movable = get_all_movable(turn); // 自分の駒の利き
+    BitBoard opp_all_movable = get_all_movable(-turn); // 相手の駒の利き
 
     // 動かす
     for (int piece = 1; piece <= 10; piece++) {
-        frombb = board.piecebb[playeridx(turn)][pieceidx(piece)];
+        frombb = g_board.piecebb[playeridx(turn)][pieceidx(piece)];
         for (BitBoard f = frombb & -frombb; frombb; frombb ^= f, f = frombb & -frombb) {
-            tobb = get_movable(board, piece, f, turn);
+            tobb = get_movable(piece, f, turn);
             if (piece == OU)
                 tobb &= ~opp_all_movable; // 王は相手の利きがある場所には動かせない
             for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
                 move.from = f;
                 move.to = t;
                 move.piece = piece;
-                move.take = abs(board.state[square(t) / 5][square(t) % 5]);
-                if ((piece == FU || piece == KK || piece == HI) && (in_opp_area(f, turn) || in_opp_area(t, turn)))
+                move.take = abs(g_board.state[square(t) / 5][square(t) % 5]);
+                if ((piece == FU || piece == KK || piece == HI) && (in_opp_area(f) || in_opp_area(t)))
                     move.promoting = 1; // 歩、角、飛は成れれば必ず成る
                 else
                     move.promoting = 0;
                 movelist[i++] = move;
-                if (piece == GI && (in_opp_area(f, turn) || in_opp_area(t, turn))) { // 銀は成る手と成らない手を両方考慮する
+                if (piece == GI && (in_opp_area(f) || in_opp_area(t))) { // 銀は成る手と成らない手を両方考慮する
                     move.from = f;
                     move.to = t;
                     move.piece = piece;
                     move.promoting = 1;
-                    move.take = abs(board.state[square(t) / 5][square(t) % 5]);
+                    move.take = abs(g_board.state[square(t) / 5][square(t) % 5]);
                     movelist[i++] = move;
                 }
             }
@@ -322,8 +416,8 @@ int get_movelist(move_t* movelist, board_t board)
 
     // 打つ
     for (int piece = 1; piece <= 6; piece++) {
-        if (board.hand[playeridx(turn)][pieceidx(piece)]) {
-            tobb = empty(board);
+        if (g_board.hand[playeridx(turn)][pieceidx(piece)]) {
+            tobb = empty();
             if (piece != FU)
                 // 歩以外は相手に取られない場所か相手に取られてもその駒を取り返せる場所に打つ
                 tobb &= ~opp_all_movable | (self_all_movable & opp_all_movable);
@@ -334,12 +428,16 @@ int get_movelist(move_t* movelist, board_t board)
                 move.take = EMPTY;
                 move.promoting = 0;
                 if (piece == FU) {
-                    if (in_opp_area(t, turn) // 敵陣に歩
-                        || (board.piecebb[playeridx(turn)][pieceidx(FU)] & columnbb(t))) // 二歩
+                    if (in_opp_area(t) // 敵陣に歩
+                        || (g_board.piecebb[playeridx(turn)][pieceidx(FU)] & columnbb(t))) // 二歩
                         continue;
-                    if (get_movable(board, piece, t, turn) & board.piecebb[playeridx(-turn)][pieceidx(OU)]) { // 王の前に歩
-                        if (judge_tsumibb(do_move(board, move))) // 打ち歩詰め
+                    if (get_movable(piece, t, turn) & g_board.piecebb[playeridx(-turn)][pieceidx(OU)]) { // 王の前に歩
+                        do_move(move, 0);
+                        if (judge_tsumibb()) { // 打ち歩詰め
+                            undo_move(move, 0);
                             continue;
+                        }
+                        undo_move(move, 0);
                     }
                 }
                 movelist[i++] = move;

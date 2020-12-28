@@ -12,6 +12,6 @@
 void compute_output(move_t* move)
 {
     move_t movelist[150];
-    int n = get_movelist(movelist, g_board);
+    int n = get_movelist(movelist);
     *move = movelist[rand() % n];
 }

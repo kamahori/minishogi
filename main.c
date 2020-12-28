@@ -46,6 +46,9 @@ void init() {
     g_board.turn = P1;
 
     sennichite_init();
+    g_board.state_h = hash_state();
+    g_board.hand_h = hash_hand();
+    st_insert();
 }
 
 void print_piece(int piece_type) {
@@ -741,16 +744,16 @@ int main(int argc, char* argv[]) {
             scanf("%s", input);
             res = move_piece(&move, input);
             if (res == -1) youLose();
-            loser = judge_sennichite(g_board, move);
-            g_board = do_move(g_board, move);
+            do_move(move, 1);
             if (DEBUG) print();
+            loser = judge_sennichite();
             if (loser) {
                 if (DEBUG) printf("sennichite\n");
                 if (loser == USER) youLose();
                 else youWin();
             }
-            st_insert(g_board);
-            sl_prepend(g_board);
+            st_insert();
+            sl_prepend();
             if (judge_outehochi()) youLose();
             if (judge_uchifuzume(move)) youLose();
             if (is_finished()) youWin();
@@ -760,16 +763,16 @@ int main(int argc, char* argv[]) {
             if (DEBUG) printf("computer(P%d)'s turn: ", (AI == P1) ? 1 : 2);
             compute_output(&move);
             print_move(move);
-            loser = judge_sennichite(g_board, move);
-            g_board = do_move(g_board, move);
+            do_move(move, 1);
             if (DEBUG) print();
+            loser = judge_sennichite();
             if (loser) {
                 if (DEBUG) printf("sennichite\n");
                 if (loser == USER) youLose();
                 else youWin();
             }
-            st_insert(g_board);
-            sl_prepend(g_board);
+            st_insert();
+            sl_prepend();
             if (judge_outehochi()) youWin();
             if (judge_uchifuzume(move)) youWin();
             if (is_finished()) youLose();
