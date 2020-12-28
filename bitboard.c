@@ -3,13 +3,13 @@
 
 #include "global_const.h"
 
-// square(0`24) ‚ğ bitboard ‚É•ÏŠ·
+// square(0ï½24) ã‚’ bitboard ã«å¤‰æ›
 BitBoard bitboard(int square)
 {
     return 1 << square;
 }
 
-// ˆÈ‰º‚ÌŠÖ”‚Í square ‚ÌˆÊ’u‚É‚ ‚é‹î‚Ì“®‚¯‚éêŠ‚ğ•\‚· bitboard ‚ğ•Ô‚·i‘¼‚Ì‹î‚Æ‚ÌÕ“Ë‚Í‚±‚±‚Å‚Í–³‹j
+// ä»¥ä¸‹ã®é–¢æ•°ã¯ square ã®ä½ç½®ã«ã‚ã‚‹é§’ã®å‹•ã‘ã‚‹å ´æ‰€ã‚’è¡¨ã™ bitboard ã‚’è¿”ã™ï¼ˆä»–ã®é§’ã¨ã®è¡çªã¯ã“ã“ã§ã¯ç„¡è¦–ï¼‰
 BitBoard generate_FU_movable(int square)
 {
     if (square >= 20) return 0;

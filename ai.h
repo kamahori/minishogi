@@ -8,7 +8,7 @@
 #include "bitboard.h"
 #include "sennichite.h"
 
-// random
+// ランダムな動き
 void compute_output(move_t* move)
 {
     move_t movelist[150];

@@ -18,13 +18,13 @@ const BitBoard OU_movable[25] = {
     98, 229, 458, 916, 776, 3139, 7335, 14670, 29340, 24856, 100448, 234720, 469440, 938880, 795392, 3214336, 7511040, 15022080, 30044160, 25452544, 2195456, 5472256, 10944512, 21889024, 9175040,
 };
 
-// square(0`24) ‚ğ bitboard ‚É•ÏŠ·
+// square(0ï½24) ã‚’ bitboard ã«å¤‰æ›
 BitBoard bitboard(int square)
 {
     return 1 << square;
 }
 
-// bitboard(1bit‚Ì‚İ1) ‚ğ square(0`24) ‚É•ÏŠ·i0‚Ì‚Æ‚«‚Í-1j
+// bitboard(1bitã®ã¿1) ã‚’ square(0ï½24) ã«å¤‰æ›ï¼ˆ0ã®ã¨ãã¯-1ï¼‰
 int square(BitBoard bb)
 {
     if (bb == 0) return -1;
@@ -37,7 +37,7 @@ int square(BitBoard bb)
     return sq;
 }
 
-// ”Õ–Ê‚Ì’†‚É‚ ‚é‚©
+// ç›¤é¢ã®ä¸­ã«ã‚ã‚‹ã‹
 int inboard(int row, int col)
 {
     return (0 <= row && row <= 4 && 0 <= col && col <= 4);
@@ -51,7 +51,7 @@ BitBoard get_KK_movable(int square, BitBoard occupied)
             for (int row = square / 5 + dr, col = square % 5 + dc; inboard(row, col); row += dr, col += dc) {
                 bb = bitboard(5 * row + col);
                 res |= bb;
-                if (bb & occupied) // ‘¼‚Ì‹î‚ÆÕ“Ë
+                if (bb & occupied) // ä»–ã®é§’ã¨è¡çª
                     break;
             }
         }
@@ -68,7 +68,7 @@ BitBoard get_HI_movable(int square, BitBoard occupied)
         for (row = square / 5 + dr; inboard(row, col); row += dr) {
             bb = bitboard(5 * row + col);
             res |= bb;
-            if (bb & occupied) // ‘¼‚Ì‹î‚ÆÕ“Ë
+            if (bb & occupied) // ä»–ã®é§’ã¨è¡çª
                 break;
         }
     }
@@ -77,7 +77,7 @@ BitBoard get_HI_movable(int square, BitBoard occupied)
         for (col = square % 5 + dc; inboard(row, col); col += dc) {
             bb = bitboard(5 * row + col);
             res |= bb;
-            if (bb & occupied) // ‘¼‚Ì‹î‚ÆÕ“Ë
+            if (bb & occupied) // ä»–ã®é§’ã¨è¡çª
                 break;
         }
     }
@@ -94,7 +94,7 @@ void printbb(BitBoard bb)
     }
 }
 
-// ã‰º”½“]
+// ä¸Šä¸‹åè»¢
 BitBoard mirrorbb(BitBoard bb)
 {
     BitBoard res = 0;
@@ -103,7 +103,7 @@ BitBoard mirrorbb(BitBoard bb)
     return res;
 }
 
-// bb ‚Ì’†‚Ì1‚ÌŒÂ”
+// bb ã®ä¸­ã®1ã®å€‹æ•°
 int popcount(BitBoard bb)
 {
     int n = 0;
@@ -111,7 +111,7 @@ int popcount(BitBoard bb)
     return n;
 }
 
-// turn ‚ÌƒvƒŒƒCƒ„[‚Ì‹î‚Ì‚ ‚éêŠ
+// turn ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®é§’ã®ã‚ã‚‹å ´æ‰€
 BitBoard occupied(board_t board, int turn)
 {
     BitBoard res = 0;
@@ -121,13 +121,13 @@ BitBoard occupied(board_t board, int turn)
     return res;
 }
 
-// ‹î‚Ì‚È‚¢êŠ
+// é§’ã®ãªã„å ´æ‰€
 BitBoard empty(board_t board)
 {
     return (~(occupied(board, P1) | occupied(board, P2))) & ((1 << 25) - 1);
 }
 
-// turn ‚ÌƒvƒŒƒCƒ„[‚Ì‹î‚Ì“®‚¯‚éêŠ
+// turn ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®é§’ã®å‹•ã‘ã‚‹å ´æ‰€
 BitBoard get_movable(board_t board, int piece, BitBoard place, int turn)
 {
     BitBoard occupied_self = occupied(board, turn);
@@ -171,11 +171,11 @@ BitBoard get_movable(board_t board, int piece, BitBoard place, int turn)
         break;
     }
 
-    bb = bb & ~occupied_self; // ©•ª‚Ì‹î‚Ì‚ ‚éêŠ‚Ö‚Í“®‚¯‚È‚¢
+    bb = bb & ~occupied_self; // è‡ªåˆ†ã®é§’ã®ã‚ã‚‹å ´æ‰€ã¸ã¯å‹•ã‘ãªã„
     return (turn == P2) ? mirrorbb(bb) : bb;
 }
 
-// turn ‚ÌƒvƒŒƒCƒ„[‚Ì‹î‚ª“®‚¯‚éêŠ‚·‚×‚Ä
+// turn ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®é§’ãŒå‹•ã‘ã‚‹å ´æ‰€ã™ã¹ã¦
 BitBoard get_all_movable(board_t board, int turn)
 {
     BitBoard res = 0, bb;
@@ -187,21 +187,21 @@ BitBoard get_all_movable(board_t board, int turn)
     return res;
 }
 
-// bb ‚ª‘Šè‚Ìw’n‚É‚ ‚é‚©
+// bb ãŒç›¸æ‰‹ã®é™£åœ°ã«ã‚ã‚‹ã‹
 int in_opp_area(BitBoard bb, int turn)
 {
     int row = square(bb) / 5;
     return (turn == 1) ? (row == 4) : (row == 0);
 }
 
-// bb ‚ª‚ ‚é—ñ
+// bb ãŒã‚ã‚‹åˆ—
 BitBoard columnbb(BitBoard bb)
 {
     int col = square(bb) % 5;
     return 0b0000100001000010000100001 << col;
 }
 
-// board ‚ğƒRƒs[
+// board ã‚’ã‚³ãƒ”ãƒ¼
 board_t copy_board(board_t board)
 {
     board_t new;
@@ -219,7 +219,7 @@ board_t copy_board(board_t board)
     return new;
 }
 
-// ‹î‚ğ“®‚©‚·
+// é§’ã‚’å‹•ã‹ã™
 board_t do_move(board_t board, move_t move)
 {
     board_t next = copy_board(board);
@@ -227,8 +227,8 @@ board_t do_move(board_t board, move_t move)
     int fromsq = square(from), tosq = square(to);
     int turn = board.turn;
     int piece = move.piece * turn;
-    
-    if (from) { // “®‚©‚·
+
+    if (from) { // å‹•ã‹ã™
         next.state[fromsq / 5][fromsq % 5] = EMPTY;
         next.piecebb[playeridx(turn)][pieceidx(piece)] ^= from;
         if (move.promoting) {
@@ -241,7 +241,7 @@ board_t do_move(board_t board, move_t move)
         }
 
         int target = board.state[tosq / 5][tosq % 5];
-        if (target != EMPTY) { // ‹î‚ğæ‚é
+        if (target != EMPTY) { // é§’ã‚’å–ã‚‹
             next.piecebb[playeridx(-turn)][pieceidx(target)] ^= to;
             if (ispromoted(target))
                 target = unpromote(target);
@@ -249,18 +249,18 @@ board_t do_move(board_t board, move_t move)
         }
     }
 
-    else { // ‘Å‚Â
+    else { // æ‰“ã¤
         next.hand[playeridx(turn)][pieceidx(piece)] -= 1;
         next.state[tosq / 5][tosq % 5] = piece;
         next.piecebb[playeridx(turn)][pieceidx(piece)] ^= to;
     }
-    
+
     next.turn = -turn;
 
     return next;
 }
 
-// turn ‚ÌƒvƒŒƒCƒ„[‚ª‘Šè‚É‰¤è‚ğŠ|‚¯‚Ä‚¢‚é‚©
+// turn ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒç›¸æ‰‹ã«ç‹æ‰‹ã‚’æ›ã‘ã¦ã„ã‚‹ã‹
 int judge_checking(board_t board, int turn)
 {
     return board.piecebb[playeridx(-turn)][pieceidx(OU)] & get_all_movable(board, turn);
@@ -268,46 +268,46 @@ int judge_checking(board_t board, int turn)
 
 int get_movelist(move_t* movelist, board_t board);
 
-// Œ»İ‚Ìè”Ô‚ÌƒvƒŒƒCƒ„[‚ª‹l‚ñ‚Å‚¢‚é‚©
+// ç¾åœ¨ã®æ‰‹ç•ªã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒè©°ã‚“ã§ã„ã‚‹ã‹
 int judge_tsumibb(board_t board)
 {
     move_t movelist[200];
     int n = get_movelist(movelist, board);
     for (int i = 0; i < n; i++) {
-        if (!judge_checking(do_move(board, movelist[i]), -board.turn)) // Œ»İ‚Ìè”Ô‚ªè‚ğw‚µ‚Ä‘Šè‚ªŸ‚½‚È‚¢
+        if (!judge_checking(do_move(board, movelist[i]), -board.turn)) // ç¾åœ¨ã®æ‰‹ç•ªãŒæ‰‹ã‚’æŒ‡ã—ã¦ç›¸æ‰‹ãŒå‹ãŸãªã„
             return 0;
     }
     return 1;
 }
 
-// Œ»İ‚Ì‹Ç–Ê‚Å‚Ì‰Â”\‚Èè‚ğ movelist ‚É“ü‚ê‚é
-// ‰Â”\‚Èè‚Ì”‚ğ•Ô‚·
+// ç¾åœ¨ã®å±€é¢ã§ã®å¯èƒ½ãªæ‰‹ã‚’ movelist ã«å…¥ã‚Œã‚‹
+// å¯èƒ½ãªæ‰‹ã®æ•°ã‚’è¿”ã™
 int get_movelist(move_t* movelist, board_t board)
 {
     int i = 0;
     BitBoard frombb, tobb;
     move_t move;
     int turn = board.turn;
-    BitBoard self_all_movable = get_all_movable(board, turn); // ©•ª‚Ì‹î‚Ì—˜‚«
-    BitBoard opp_all_movable = get_all_movable(board, -turn); // ‘Šè‚Ì‹î‚Ì—˜‚«
+    BitBoard self_all_movable = get_all_movable(board, turn); // è‡ªåˆ†ã®é§’ã®åˆ©ã
+    BitBoard opp_all_movable = get_all_movable(board, -turn); // ç›¸æ‰‹ã®é§’ã®åˆ©ã
 
-    // “®‚©‚·
+    // å‹•ã‹ã™
     for (int piece = 1; piece <= 10; piece++) {
         frombb = board.piecebb[playeridx(turn)][pieceidx(piece)];
         for (BitBoard f = frombb & -frombb; frombb; frombb ^= f, f = frombb & -frombb) {
             tobb = get_movable(board, piece, f, turn);
             if (piece == OU)
-                tobb &= ~opp_all_movable; // ‰¤‚Í‘Šè‚Ì—˜‚«‚ª‚ ‚éêŠ‚É‚Í“®‚©‚¹‚È‚¢
+                tobb &= ~opp_all_movable; // ç‹ã¯ç›¸æ‰‹ã®åˆ©ããŒã‚ã‚‹å ´æ‰€ã«ã¯å‹•ã‹ã›ãªã„
             for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
                 move.from = f;
                 move.to = t;
                 move.piece = piece;
                 if ((piece == FU || piece == KK || piece == HI) && (in_opp_area(f, turn) || in_opp_area(t, turn)))
-                    move.promoting = 1; // •àAŠpA”ò‚Í¬‚ê‚ê‚Î•K‚¸¬‚é
+                    move.promoting = 1; // æ­©ã€è§’ã€é£›ã¯æˆã‚Œã‚Œã°å¿…ãšæˆã‚‹
                 else
                     move.promoting = 0;
                 movelist[i++] = move;
-                if (piece == GI && (in_opp_area(f, turn) || in_opp_area(t, turn))) { // ‹â‚Í¬‚éè‚Æ¬‚ç‚È‚¢è‚ğ—¼•ûl—¶‚·‚é
+                if (piece == GI && (in_opp_area(f, turn) || in_opp_area(t, turn))) { // éŠ€ã¯æˆã‚‹æ‰‹ã¨æˆã‚‰ãªã„æ‰‹ã‚’ä¸¡æ–¹è€ƒæ…®ã™ã‚‹
                     move.from = f;
                     move.to = t;
                     move.piece = piece;
@@ -318,24 +318,24 @@ int get_movelist(move_t* movelist, board_t board)
         }
     }
 
-    // ‘Å‚Â
+    // æ‰“ã¤
     for (int piece = 1; piece <= 6; piece++) {
         if (board.hand[playeridx(turn)][pieceidx(piece)]) {
             tobb = empty(board);
             if (piece != FU)
-                // •àˆÈŠO‚Í‘Šè‚Éæ‚ç‚ê‚È‚¢êŠ‚©‘Šè‚Éæ‚ç‚ê‚Ä‚à‚»‚Ì‹î‚ğæ‚è•Ô‚¹‚éêŠ‚É‘Å‚Â
+                // æ­©ä»¥å¤–ã¯ç›¸æ‰‹ã«å–ã‚‰ã‚Œãªã„å ´æ‰€ã‹ç›¸æ‰‹ã«å–ã‚‰ã‚Œã¦ã‚‚ãã®é§’ã‚’å–ã‚Šè¿”ã›ã‚‹å ´æ‰€ã«æ‰“ã¤
                 tobb &= ~opp_all_movable | (self_all_movable & opp_all_movable);
             for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
-                move.from = 0; // ‘Å‚Âê‡‚Í from = 0
+                move.from = 0; // æ‰“ã¤å ´åˆã¯ from = 0
                 move.to = t;
                 move.piece = piece;
                 move.promoting = 0;
                 if (piece == FU) {
-                    if (in_opp_area(t, turn) // “Gw‚É•à
-                        || (board.piecebb[playeridx(turn)][pieceidx(FU)] & columnbb(t))) // “ñ•à
+                    if (in_opp_area(t, turn) // æ•µé™£ã«æ­©
+                        || (board.piecebb[playeridx(turn)][pieceidx(FU)] & columnbb(t))) // äºŒæ­©
                         continue;
-                    if (get_movable(board, piece, t, turn) & board.piecebb[playeridx(-turn)][pieceidx(OU)]) { // ‰¤‚Ì‘O‚É•à
-                        if (judge_tsumibb(do_move(board, move))) // ‘Å‚¿•à‹l‚ß
+                    if (get_movable(board, piece, t, turn) & board.piecebb[playeridx(-turn)][pieceidx(OU)]) { // ç‹ã®å‰ã«æ­©
+                        if (judge_tsumibb(do_move(board, move))) // æ‰“ã¡æ­©è©°ã‚
                             continue;
                     }
                 }
@@ -346,3 +346,4 @@ int get_movelist(move_t* movelist, board_t board)
 
     return i;
 }
+

@@ -14,7 +14,7 @@ typedef struct {
     int sennichite;
 } STEntry;
 
-STEntry* STable[ST_SIZE]; // ç“úè”»’è—pƒnƒbƒVƒ…ƒe[ƒuƒ‹
+STEntry* STable[ST_SIZE]; // åƒæ—¥æ‰‹åˆ¤å®šç”¨ãƒãƒƒã‚·ãƒ¥ãƒ†ãƒ¼ãƒ–ãƒ«
 int hash_seed[21][25];
 
 void st_insert(board_t board);
@@ -27,13 +27,13 @@ void sennichite_init()
     srand(0);
     for (int i = 0; i < 21; i++) {
         for (int j = 0; j < 25; j++) {
-            hash_seed[i][j] = (rand() & ((1 << 15) - 1)) << 15 | (rand() & ((1 << 15) - 1)); // 30Œ…‚Ì—”
+            hash_seed[i][j] = (rand() & ((1 << 15) - 1)) << 15 | (rand() & ((1 << 15) - 1)); // 30æ¡ã®ä¹±æ•°
         }
     }
     st_insert(g_board);
 }
 
-// state ‚ğ®”‚É•ÏŠ· (Zobrist hashing)
+// state ã‚’æ•´æ•°ã«å¤‰æ› (Zobrist hashing)
 int hash_state(board_t board)
 {
     int res = 0;
@@ -44,7 +44,7 @@ int hash_state(board_t board)
     }
     return res;
 }
-// hand ‚ğ®”‚É•ÏŠ·
+// hand ã‚’æ•´æ•°ã«å¤‰æ›
 int hash_hand(board_t board)
 {
     int res = 0;
@@ -102,7 +102,7 @@ typedef struct slnode_t {
     struct slnode_t* next;
 }SLNode;
 
-SLNode* SList = NULL; // ˜A‘±‰¤è‚Ìç“úè”»’è—pƒŠƒXƒg
+SLNode* SList = NULL; // é€£ç¶šç‹æ‰‹ã®åƒæ—¥æ‰‹åˆ¤å®šç”¨ãƒªã‚¹ãƒˆ
 
 void sl_prepend(board_t board)
 {
@@ -118,7 +118,7 @@ void sl_prepend(board_t board)
     SList = node;
 }
 
-// ˜A‘±‰¤è‚Ìç“úè‚ª¬—§‚µ‚Ä‚¢‚é‚©‚ğ•Ô‚·
+// é€£ç¶šç‹æ‰‹ã®åƒæ—¥æ‰‹ãŒæˆç«‹ã—ã¦ã„ã‚‹ã‹ã‚’è¿”ã™
 int judge_checking_sennichite(board_t board)
 {
     SLNode* node = SList->next;
@@ -136,16 +136,16 @@ int judge_checking_sennichite(board_t board)
     return 0;
 }
 
-// move ‚Å“®‚¢‚½Œã‚Éç“úè‚Å•‰‚¯‚éƒvƒŒƒCƒ„[‚Ì turn ‚ğ•Ô‚·
+// move ã§å‹•ã„ãŸå¾Œã«åƒæ—¥æ‰‹ã§è² ã‘ã‚‹ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã® turn ã‚’è¿”ã™
 int judge_sennichite(board_t board, move_t move)
 {
     board = do_move(board, move);
     STEntry* entry = st_search(board);
     if (!entry || entry->sennichite < 3)
-        return 0; // ç“úè‚Å‚È‚¢
+        return 0; // åƒæ—¥æ‰‹ã§ãªã„
     if (judge_checking_sennichite(board))
-        return -board.turn; // ‰¤è‚ğ‚©‚¯‚Ä‚¢‚é•û‚Ì•‰‚¯
-    return P1; // æè‚Ì•‰‚¯
+        return -board.turn; // ç‹æ‰‹ã‚’ã‹ã‘ã¦ã„ã‚‹æ–¹ã®è² ã‘
+    return P1; // å…ˆæ‰‹ã®è² ã‘
 }
 
 void print_hash()

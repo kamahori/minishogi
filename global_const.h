@@ -4,13 +4,13 @@ int DEBUG = 0;
 
 #define max(a, b) (((a)>(b))?(a):(b))
 #define min(a, b) (((a)<(b))?(a):(b))
-#define promote(p) (((p)>0)?((p)+6):((p)-6)) // ¬‚é
-#define unpromote(p) (((p)>0)?((p)-6):((p)+6)) // ¬‚è‚ğ‰ğœ
-#define ispromoted(p) ((p)>=7||(p)<=-7) // ¬‚Á‚Ä‚¢‚é‚©
-#define playeridx(p) ((p>0)?0:1) // P1‚Ì‹î‚È‚ç0AP2‚Ì‹î‚È‚ç1Bhand ‚Æ piecebb ‚Ì”z—ñQÆ—p
-#define pieceidx(p) (abs(p)-1) // ‹î‚Ìâ‘Î’l-1Bhand ‚Æ piecebb ‚Ì”z—ñQÆ—p
+#define promote(p) (((p)>0)?((p)+6):((p)-6)) // æˆã‚‹
+#define unpromote(p) (((p)>0)?((p)-6):((p)+6)) // æˆã‚Šã‚’è§£é™¤
+#define ispromoted(p) ((p)>=7||(p)<=-7) // æˆã£ã¦ã„ã‚‹ã‹
+#define playeridx(p) ((p>0)?0:1) // P1ã®é§’ãªã‚‰0ã€P2ã®é§’ãªã‚‰1ã€‚hand ã¨ piecebb ã®é…åˆ—å‚ç…§ç”¨
+#define pieceidx(p) (abs(p)-1) // é§’ã®çµ¶å¯¾å€¤-1ã€‚hand ã¨ piecebb ã®é…åˆ—å‚ç…§ç”¨
 
-//P1: æè, P2: Œãè
+//P1: å…ˆæ‰‹, P2: å¾Œæ‰‹
 const int P1 = 1;
 const int P2 = -1;
 int USER;
@@ -18,23 +18,23 @@ int AI;
 
 enum {
     EMPTY = 0,
-    FU = 1, // •à
-    GI = 2, // ‹â
-    KK = 3, // Šp
-    HI = 4, // ”ò
-    KI = 5, // ‹à
-    OU = 6  // ‰¤
+    FU = 1, // æ­©
+    GI = 2, // éŠ€
+    KK = 3, // è§’
+    HI = 4, // é£›
+    KI = 5, // é‡‘
+    OU = 6  // ç‹
 };
-// P1: ³, P2: •‰
-// ¬‚è: +6 (promote)
+// P1: æ­£, P2: è² 
+// æˆã‚Š: +6 (promote)
 
 typedef int BitBoard;
 
 typedef struct {
-    int state[5][5]; // ”Õ–Ê‘S‘Ì‚Ìî•ñ
-    int hand[2][6]; // ‚¿‹î
-    BitBoard piecebb[2][10]; // ŠeƒRƒ}‚ÌˆÊ’u(bitboard)
-    int turn; // è”Ô
+    int state[5][5]; // ç›¤é¢å…¨ä½“ã®æƒ…å ±
+    int hand[2][6]; // æŒã¡é§’
+    BitBoard piecebb[2][10]; // å„ã‚³ãƒã®ä½ç½®(bitboard)
+    int turn; // æ‰‹ç•ª
 } board_t;
 
 board_t g_board;
@@ -49,8 +49,8 @@ board_t g_board;
 // 1|  0  1  2  3  4
 
 typedef struct {
-    BitBoard from; // “®‚©‚·‘O
-    BitBoard to; // “®‚©‚µ‚½Œã
-    int piece; // “®‚©‚·‹îi1`6j
-    int promoting; // ¬‚é‚©‚Ç‚¤‚©
+    BitBoard from; // å‹•ã‹ã™å‰
+    BitBoard to; // å‹•ã‹ã—ãŸå¾Œ
+    int piece; // å‹•ã‹ã™é§’ï¼ˆ1ï½6ï¼‰
+    int promoting; // æˆã‚‹ã‹ã©ã†ã‹
 } move_t;
