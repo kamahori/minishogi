@@ -38,7 +38,9 @@ void init() {
     for (int row = 0; row < 5; row++) {
         for (int col = 0; col < 5; col++) {
             int piece = g_board.state[row][col];
-            g_board.piecebb[playeridx(piece)][pieceidx(piece)] |= bitboard(row * 5 + col);
+            if (piece != EMPTY) {
+                g_board.piecebb[playeridx(piece)][pieceidx(piece)] |= bitboard(row * 5 + col);
+            }
         }
     }
     g_board.turn = P1;

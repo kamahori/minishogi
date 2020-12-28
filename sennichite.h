@@ -6,55 +6,92 @@
 #include "global_const.h"
 #include "bitboard.h"
 
+int hash_seed[21][25];
+#define hashidx(p) ((p)+10) // 駒に対応する配列の index。hash_seed[10] は使わない
+#define hand_hash_seed(turn, piece) (1<<((turn)*12+(piece)*2))
+
+// state のハッシュ値を計算 (Zobrist hashing)
+int hash_state(board_t board)
+{
+    int hash = (board.turn == 1) ? 0 : 1; // 最下位ビットは turn を表す
+    for (int row = 0; row < 5; row++) {
+        for (int col = 0; col < 5; col++) {
+            if (board.state[row][col] != EMPTY)
+                hash ^= hash_seed[hashidx(board.state[row][col])][5 * row + col];
+        }
+    }
+    return hash;
+}
+// hand のハッシュ値を計算
+int hash_hand(board_t board)
+{
+    int hash = 0;
+    for (int turn = 0; turn < 2; turn++) {
+        for (int piece = 0; piece < 6; piece++) {
+            hash += board.hand[turn][piece] * hand_hash_seed(turn, piece);
+        }
+    }
+    return hash;
+}
+
+// move で動いた後の state のハッシュ値を計算
+int hash_state_aftermove(int hash, move_t move, int turn)
+{
+    BitBoard from = move.from;
+    int fromsq = square(from), tosq = square(move.to);
+    int piece = move.piece * turn;
+    int target = move.take * turn;
+
+    if (from) { // 動かす
+        hash ^= hash_seed[hashidx(piece)][fromsq];
+        if (target != EMPTY) { // 駒を取る
+            hash ^= hash_seed[hashidx(target)][tosq];
+        }
+        if (move.promoting) { // 成る
+            hash ^= hash_seed[hashidx(promote(piece))][tosq];
+        }
+        else {
+            hash ^= hash_seed[hashidx(piece)][tosq];
+        }
+    }
+    else { // 打つ
+        hash ^= hash_seed[hashidx(piece)][tosq];
+    }
+    hash ^= 1; // turn を入れ替える
+    return hash;
+}
+// move で動いた後の hand のハッシュ値を計算
+int hash_hand_aftermove(int hash, move_t move, int turn)
+{
+    BitBoard from = move.from;
+    int piece = move.piece;
+    int target = move.take;
+
+    if (from) { // 動かす
+        if (target != EMPTY) { // 駒を取る
+            if (ispromoted(target))
+                target = unpromote(target);
+            hash += hand_hash_seed(turn, target);
+        }
+    }
+    else { // 打つ
+        hash -= hand_hash_seed(turn, piece);
+    }
+    return hash;
+}
+
+
 #define ST_SIZE (1 << 10)
+#define st_hash(key) ((key)&(ST_SIZE-1))
+#define st_rehash(key) ((key+1)&(ST_SIZE-1))
 
 typedef struct {
     int state;
     int hand;
     int sennichite;
-} STEntry;
+} STEntry; // entry of sennichite table
 
 STEntry* STable[ST_SIZE]; // 千日手判定用ハッシュテーブル
-int hash_seed[21][25];
-
-void st_insert(board_t board);
-
-void sennichite_init()
-{
-    for (int i = 0; i < ST_SIZE; i++) {
-        STable[i] = NULL;
-    }
-    srand(0);
-    for (int i = 0; i < 21; i++) {
-        for (int j = 0; j < 25; j++) {
-            hash_seed[i][j] = (rand() & ((1 << 15) - 1)) << 15 | (rand() & ((1 << 15) - 1)); // 30桁の乱数
-        }
-    }
-    st_insert(g_board);
-}
-
-// state を整数に変換 (Zobrist hashing)
-int hash_state(board_t board)
-{
-    int res = 0;
-    for (int row = 0; row < 5; row++) {
-        for (int col = 0; col < 5; col++) {
-            res ^= hash_seed[board.state[row][col] + 10][5 * row + col];
-        }
-    }
-    return res;
-}
-// hand を整数に変換
-int hash_hand(board_t board)
-{
-    int res = 0;
-    for (int turn = 0; turn < 2; turn++) {
-        for (int piece = 0; piece < 6; piece++) {
-            res |= board.hand[turn][piece] << (turn * 12 + piece * 2);
-        }
-    }
-    return res;
-}
 
 int st_code(int key)
 {
@@ -64,11 +101,11 @@ int st_code(int key)
 STEntry* st_search(board_t board)
 {
     int state = hash_state(board), hand = hash_hand(board);
-    int index = st_code(state);
+    int index = st_hash(state);
     while (STable[index]) {
         if (STable[index]->state == state && STable[index]->hand == hand)
             return STable[index];
-        index = (index + 1) % ST_SIZE;
+        index = st_rehash(index);
     }
     return NULL;
 }
@@ -76,13 +113,13 @@ STEntry* st_search(board_t board)
 void st_insert(board_t board)
 {
     int state = hash_state(board), hand = hash_hand(board);
-    int index = st_code(state);
+    int index = st_hash(state);
     while (STable[index]) {
         if (STable[index]->state == state && STable[index]->hand == hand) {
             STable[index]->sennichite++;
             return;
         }
-        index = (index + 1) % ST_SIZE;
+        index = st_rehash(index);
     }
     STEntry* entry = (STEntry*)malloc(sizeof(STEntry));
     if (!entry) {
@@ -95,12 +132,27 @@ void st_insert(board_t board)
     STable[index] = entry;
 }
 
+void sennichite_init()
+{
+    for (int i = 0; i < ST_SIZE; i++) {
+        STable[i] = NULL;
+    }
+    srand(0);
+    for (int i = 0; i < 21; i++) {
+        for (int j = 0; j < 25; j++) {
+            hash_seed[i][j] = (rand() & ((1 << 15) - 1)) << 16 | (rand() & ((1 << 15) - 1)) << 1; // 31桁の乱数（最下位ビットは0）
+        }
+    }
+    st_insert(g_board);
+}
+
+
 typedef struct slnode_t {
     int state;
     int hand;
     int ischecking;
     struct slnode_t* next;
-}SLNode;
+}SLNode; // node of sennichite list
 
 SLNode* SList = NULL; // 連続王手の千日手判定用リスト
 
@@ -113,7 +165,7 @@ void sl_prepend(board_t board)
     }
     node->state = hash_state(board);
     node->hand = hash_hand(board);
-    node->ischecking = judge_checking(board, board.turn);
+    node->ischecking = judge_checking(board, -board.turn); // 手を指したプレイヤー（現在の手番の逆）が王手を掛けていたか
     node->next = SList;
     SList = node;
 }
