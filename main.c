@@ -45,10 +45,12 @@ void init() {
     }
     g_board.turn = P1;
 
-    sennichite_init();
+    hash_init();
     g_board.state_h = hash_state();
     g_board.hand_h = hash_hand();
+    st_init();
     st_insert();
+    tt_init();
 }
 
 void print_piece(int piece_type) {
@@ -762,7 +764,8 @@ int main(int argc, char* argv[]) {
         else {
             // computer's turn
             if (DEBUG) printf("computer(P%d)'s turn: ", (AI == P1) ? 1 : 2);
-            compute_output(&move);
+            res = compute_output(&move);
+            if (res == -1) youWin();
             print_move(move);
             do_move(move, 1);
             if (DEBUG) print();
