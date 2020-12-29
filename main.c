@@ -756,6 +756,7 @@ int main(int argc, char* argv[]) {
             sl_prepend();
             if (judge_outehochi()) youLose();
             if (judge_uchifuzume(move)) youLose();
+            //if (judge_tsumi(AI)) youWin();
             if (is_finished()) youWin();
         }
         else {
@@ -775,6 +776,7 @@ int main(int argc, char* argv[]) {
             sl_prepend();
             if (judge_outehochi()) youWin();
             if (judge_uchifuzume(move)) youWin();
+            //if (judge_tsumi(USER)) youLose();
             if (is_finished()) youLose();
         }
         cnt++;
