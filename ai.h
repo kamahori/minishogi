@@ -29,7 +29,7 @@ void ai_print_move(move_t move)
 	}
 }
 
-#define INF 0x7FFFFF00
+#define INF 1000000000
 
 const int piece_value[10] = { // 盤面上の駒の評価値（暫定値）
 	10,     // 歩
@@ -99,12 +99,12 @@ int alphabeta(int depth, int maxdepth, int alpha, int beta)
 	if (turn == USER && judge_checking(USER)) // USERが必ず勝つ
 		return -INF;
 
-	int bestscore = (g_board.turn == AI) ? -INF + 10 : INF - 10;
+	int bestscore = (turn == AI) ? -INF + 10 : INF - 10;
 	TTEntry* entry = tt_search();
 	if (!entry) { // 未探索
 		entry = tt_insert();
 		if (depth >= maxdepth)
-			return eval();
+			return entry->score; // = eval()
 	}
 	else { // 探索済み
 		int searched_score = entry->score;
@@ -132,15 +132,15 @@ int alphabeta(int depth, int maxdepth, int alpha, int beta)
 		}
 	}
 
-	int score;
-	int ispruned = 0;
 	if (!(entry->movelist)) {
 		int res = expand_node(&(entry->movelist));
 		if (!res)
 			return bestscore;
 	}
-	MNode* mnode = entry->movelist;
 
+	MNode* mnode = entry->movelist;
+	int score;
+	int ispruned = 0;
 	while (mnode) { // for each move
 		do_move(mnode->move, 1);
 		score = alphabeta(depth + 1, maxdepth, alpha, beta);
@@ -183,6 +183,11 @@ int choose_move(move_t* move, int maxdepth)
 	// printf("bestscore: %d\n", bestscore);
 
 	TTEntry* entry = tt_search();
+	if (!entry) {
+		if (bestscore > INF - 100)
+			return 1;
+		return 0;
+	}
 	MNode* mnode = entry->movelist;
 	if (!mnode)
 		return -1;
@@ -192,7 +197,7 @@ int choose_move(move_t* move, int maxdepth)
 		// printf(", score: %d\n", mnode->score);
 		if (mnode->score == bestscore) {
 			*move = mnode->move;
-			// break;
+			break;
 		}
 		mnode = mnode->next;
 	}

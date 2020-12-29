@@ -173,21 +173,6 @@ int judge_sennichite()
     return P1; // 先手の負け
 }
 
-void print_hash()
-{
-    printf("STable:\n");
-    for (int i = 0; i < ST_SIZE; i++) {
-        if (STable[i])
-            printf("state: %d, hand: %d, sennichite: %d\n", STable[i]->state, STable[i]->hand, STable[i]->sennichite);
-    }
-    SLNode* node = SList;
-    printf("SList:\n");
-    while (node) {
-        printf("state: %d, hand: %d, ischecking: %d\n", node->state, node->hand, node->ischecking);
-        node = node->next;
-    }
-}
-
 
 typedef struct mnode_t {
     move_t move;
@@ -245,7 +230,7 @@ TTEntry* tt_insert()
     }
     entry->state = state_h;
     entry->hand = hand_h;
-    entry->score = 0;// eval();
+    entry->score = eval();
     entry->ispruned = 0;
     entry->searched_depth = 0;
     entry->movelist = NULL;
