@@ -10,6 +10,16 @@ int hash_seed[21][25];
 #define hashidx(p) ((p)+10) // 駒に対応する配列の index。hash_seed[10] は使わない
 #define hand_hash_seed(turn, piece) (1<<((turn)*12+(piece)*2))
 
+void hash_init()
+{
+    srand(0);
+    for (int i = 0; i < 21; i++) {
+        for (int j = 0; j < 25; j++) {
+            hash_seed[i][j] = (rand() & ((1 << 15) - 1)) << 16 | (rand() & ((1 << 15) - 1)) << 1; // 31桁の乱数（最下位ビットは0）
+        }
+    }
+}
+
 // state のハッシュ値を計算 (Zobrist hashing)
 int hash_state()
 {
@@ -47,16 +57,10 @@ typedef struct {
 
 STEntry* STable[ST_SIZE]; // 千日手判定用ハッシュテーブル
 
-void sennichite_init()
+void st_init()
 {
     for (int i = 0; i < ST_SIZE; i++) {
         STable[i] = NULL;
-    }
-    srand(0);
-    for (int i = 0; i < 21; i++) {
-        for (int j = 0; j < 25; j++) {
-            hash_seed[i][j] = (rand() & ((1 << 15) - 1)) << 16 | (rand() & ((1 << 15) - 1)) << 1; // 31桁の乱数（最下位ビットは0）
-        }
     }
 }
 
@@ -94,6 +98,15 @@ void st_insert()
     STable[index] = entry;
 }
 
+void print_st()
+{
+    printf("STable:\n");
+    for (int i = 0; i < ST_SIZE; i++) {
+        if (STable[i])
+            printf("state: %d, hand: %d, sennichite: %d\n", STable[i]->state, STable[i]->hand, STable[i]->sennichite);
+    }
+}
+
 
 typedef struct slnode_t {
     int state;
@@ -118,6 +131,16 @@ void sl_prepend()
     node->ischecking = judge_checking(-g_board.turn); // 手を指したプレイヤー（現在の手番の逆）が王手を掛けているか
     node->next = SList;
     SList = node;
+}
+
+void print_sl()
+{
+    SLNode* node = SList;
+    printf("SList:\n");
+    while (node) {
+        printf("state: %d, hand: %d, ischecking: %d\n", node->state, node->hand, node->ischecking);
+        node = node->next;
+    }
 }
 
 // 連続王手の千日手が成立しているかを返す
@@ -163,4 +186,87 @@ void print_hash()
         printf("state: %d, hand: %d, ischecking: %d\n", node->state, node->hand, node->ischecking);
         node = node->next;
     }
+}
+
+
+typedef struct mnode_t {
+    move_t move;
+    int score;
+    struct mnode_t* next;
+} MNode;
+
+typedef struct {
+    int state; // state のハッシュ値
+    int hand; // hand のハッシュ値
+    int score; // 局面の評価値
+    int ispruned; // 枝刈りされたかどうか
+    int searched_depth; // 探索した深さ
+    MNode* movelist; // 次の手のリスト
+} TTEntry; // entry of transposition table
+
+#define TT_SIZE (1 << 27)
+#define tt_hash(key) ((key)&(TT_SIZE-1))
+#define tt_rehash(key) ((key+1)&(TT_SIZE-1))
+
+TTEntry* TTable[TT_SIZE]; // 局面記録用テーブル
+
+void tt_init()
+{
+    for (int i = 0; i < TT_SIZE; i++) {
+        TTable[i] = NULL;
+    }
+}
+
+TTEntry* tt_search()
+{
+    int state_h = g_board.state_h, hand_h = g_board.hand_h;
+    int index = tt_hash(state_h);
+    while (TTable[index]) {
+        if (TTable[index]->state == state_h && TTable[index]->hand == hand_h)
+            return TTable[index];
+        index = tt_rehash(index);
+    }
+    return NULL;
+}
+
+int eval();
+
+TTEntry* tt_insert()
+{
+    int state_h = g_board.state_h, hand_h = g_board.hand_h;
+    int index = tt_hash(state_h);
+    while (TTable[index]) {
+        index = tt_rehash(index);
+    }
+    TTEntry* entry = (TTEntry*)malloc(sizeof(TTEntry));
+    if (!entry) {
+        perror("failed to allocate memory");
+        exit(1);
+    }
+    entry->state = state_h;
+    entry->hand = hand_h;
+    entry->score = 0;// eval();
+    entry->ispruned = 0;
+    entry->searched_depth = 0;
+    entry->movelist = NULL;
+    TTable[index] = entry;
+    return entry;
+}
+
+void print_tt()
+{
+    printf("TTable:\n");
+    for (int i = 0; i < TT_SIZE; i++) {
+        if (TTable[i])
+            printf("state: %d, hand: %d, score: %d, searched_depth: %d\n", TTable[i]->state, TTable[i]->hand, TTable[i]->score, TTable[i]->searched_depth);
+    }
+}
+
+double tt_usage_rate()
+{
+    int cnt = 0;
+    for (int i = 0; i < TT_SIZE; i++) {
+        if (TTable[i]) cnt++;
+    }
+    return (double)cnt / TT_SIZE;
 }
