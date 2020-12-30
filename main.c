@@ -411,6 +411,13 @@ int move_piece(move_t* move, char input[]) {
         return -1;
     }
 
+    // 小文字入力に対応
+    for (int i = 0; i < input_length; i++) {
+        if ('a' <= input[i] && input[i] <= 'z') {
+            input[i] += 'A' - 'a';
+        }
+    }
+
     // 移動元or打つ先を指定できていなければ反則
     if (!('1' <= input[0] && input[0] <= '5' && 'A' <= input[1] && input[1] <= 'E')) {
         printf("error: wrong input\n");
