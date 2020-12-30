@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "global_const.h"
 #include "bitboard.h"
@@ -286,6 +287,9 @@ int compute_output(move_t* move)
     int depthlimit = 7;
     int res;
 
+    clock_t start, end;
+    start = clock();
+
     judge_nextmove_sennichite();
 
     for (int maxdepth = 3; maxdepth <= depthlimit; maxdepth++) {
@@ -293,6 +297,9 @@ int compute_output(move_t* move)
         if (res != 0)
             break;
     }
+
+    end = clock();
+    if (DEBUG) printf("time: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 
     if (DEBUG && res == -1) printf("no move\n");
     return res;
