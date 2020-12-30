@@ -31,23 +31,21 @@ const int handpiece_value[6] = { // 持ち駒の評価値（暫定値）
     100000 // 王
 };
 
-// AIから見た盤面の評価値（暫定値）改良が必要
-int eval()
+// turn のプレイヤーから見た盤面の評価値（暫定値）
+// 勝敗の判定は必要ない
+int eval(int turn)
 {
-    if (g_board.turn == AI && judge_checking(AI))
-        return INF;
-    if (g_board.turn == USER && judge_checking(USER))
-        return -INF;
-
     int score = 0;
+
+    // 盤上の駒単独の価値
     for (int p = 0; p < 10; p++) {
-        score += popcount(g_board.piecebb[playeridx(AI)][p]) * piece_value[p];
-        score -= popcount(g_board.piecebb[playeridx(USER)][p]) * piece_value[p];
+        score += popcount(g_board.piecebb[playeridx(turn)][p]) * piece_value[p];
     }
+    // 持ち駒単独の価値
     for (int p = 0; p < 6; p++) {
-        score += g_board.hand[playeridx(AI)][p] * handpiece_value[p];
-        score -= g_board.hand[playeridx(USER)][p] * handpiece_value[p];
+        score += g_board.hand[playeridx(turn)][p] * handpiece_value[p];
     }
+
     return score;
 }
 
@@ -220,6 +218,8 @@ void judge_nextmove_sennichite()
     }
 }
 
+void print_move(move_t move);
+
 // 反復深化 alpha-beta 探索（深さ depthlimit まで）による最善手を move に代入
 // 返り値　1：成功、-1：指し手無し
 int choose_move(move_t* move, int depthlimit)
@@ -227,7 +227,7 @@ int choose_move(move_t* move, int depthlimit)
     judge_nextmove_sennichite();
 
     int bestscore = 0;
-    for (int maxdepth = 3; maxdepth <= depthlimit; maxdepth++) {
+    for (int maxdepth = 5; maxdepth <= depthlimit; maxdepth++) {
         // printf("\nmaxdepth = %d\n", maxdepth);
         bestscore = alphabeta(0, maxdepth, -INF, INF);
         // printf("bestscore: %d\n", bestscore);
@@ -258,6 +258,9 @@ int choose_move(move_t* move, int depthlimit)
     move_t bestmoves[50];
     int n = 0;
     while (mnode) {
+        // printf("move: ");
+        // print_move(mnode->move);
+        // printf(", score: %d\n", mnode->score);
         if (mnode->score == bestscore) {
             bestmoves[n++] = mnode->move;
         }
@@ -267,8 +270,6 @@ int choose_move(move_t* move, int depthlimit)
     *move = bestmoves[rand() % n];
     return 1;
 }
-
-void print_move(move_t move);
 
 // 次の手を求めて表示する
 // 返り値　1：成功、-1：指し手無し
@@ -280,7 +281,10 @@ int compute_output(move_t* move)
     start = clock();
 
     int res = choose_move(move, depthlimit);
-    if (res == 1) print_move(*move);
+    if (res == 1) {
+        print_move(*move);
+        printf("\n");
+    }
 
     end = clock();
     if (DEBUG) printf("time: %f\n", (double)(end - start) / CLOCKS_PER_SEC);

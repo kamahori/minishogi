@@ -698,7 +698,6 @@ void print_move(move_t move)
         case OU: printf("OU"); break;
         }
     }
-    printf("\n");
 }
 
 void youWin() {

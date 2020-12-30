@@ -214,7 +214,7 @@ TTEntry* tt_search()
     return NULL;
 }
 
-int eval();
+int eval(int turn);
 
 TTEntry* tt_insert()
 {
@@ -230,7 +230,7 @@ TTEntry* tt_insert()
     }
     entry->state = state_h;
     entry->hand = hand_h;
-    entry->score = eval();
+    entry->score = eval(AI) - eval(USER);
     entry->ispruned = 0;
     entry->searched_depth = 0;
     entry->movelist = NULL;
