@@ -22,6 +22,20 @@ const int piece_value[10] = { // 盤面上の駒の評価値（暫定値）
     100,    // 馬
     120     // 龍
 };
+
+const int dist_value[10] = { // 相手の王との距離が 1 のときの価値
+    10,     // 歩
+    40,     // 銀
+    0,      // 角
+    0,      // 飛
+    50,     // 金
+    10,     // 王
+    40,     // と金
+    40,     // 成銀
+    0,      // 馬
+    0       // 龍
+};
+
 const int handpiece_value[6] = { // 持ち駒の評価値（暫定値）
     11, // 歩
     41, // 銀
@@ -44,6 +58,20 @@ int eval(int turn)
     // 持ち駒単独の価値
     for (int p = 0; p < 6; p++) {
         score += g_board.hand[playeridx(turn)][p] * handpiece_value[p];
+    }
+
+    BitBoard opp_OU = g_board.piecebb[playeridx(turn)][pieceidx(OU)];
+    int sq = square(opp_OU);
+    int row = sq / 5, col = sq % 5;
+
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            int piece = g_board.state[i][j];
+            if (piece == EMPTY || playeridx(piece) != turn) continue;
+            int dist = abs(row - i) + abs(col - j); // 相手の王とのマンハッタン距離
+            if (dist == 0) continue;
+            score += (int) dist_value[pieceidx(piece)] / dist;
+        }
     }
 
     return score;
