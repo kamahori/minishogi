@@ -73,7 +73,7 @@ int eval()
     return score;
 }
 
-#define NOT_SEARCHED (INF + 1000)
+#define NOT_SEARCHED (INF + 10000)
 
 // 次の手をリストにして格納
 // 返り値　1：成功、0：失敗
@@ -134,11 +134,11 @@ int alphabeta(int depth, int maxdepth, int alpha, int beta)
 {
     int turn = g_board.turn;
     if (turn == AI && judge_checking(AI)) // AIが必ず勝つ
-        return INF;
+        return INF - depth;
     if (turn == USER && judge_checking(USER)) // USERが必ず勝つ
-        return -INF;
+        return -INF + depth;
 
-    int bestscore = (turn == AI) ? -INF - 10 : INF + 10;
+    int bestscore = (turn == AI) ? -INF - 100 : INF + 100;
     TTEntry* entry = tt_search();
     if (!entry) { // 未探索
         entry = tt_insert();
@@ -147,7 +147,7 @@ int alphabeta(int depth, int maxdepth, int alpha, int beta)
     }
     else { // 探索済み
         int searched_score = entry->score;
-        if (depth >= maxdepth || abs(searched_score) > INF - 100) { // 末端局面か勝敗の確定している局面
+        if (depth >= maxdepth || abs(searched_score) > INF - 1000) { // 末端局面か勝敗の確定している局面
             return searched_score;
         }
         if (entry->searched_depth >= maxdepth - depth) { // より深くまで探索しているため利用する
@@ -225,7 +225,7 @@ int choose_move(move_t* move, int maxdepth)
 
     TTEntry* entry = tt_search();
     if (!entry) {
-        if (bestscore > INF - 100)
+        if (bestscore > INF - 1000)
             return 1;
         return 0;
     }
@@ -249,7 +249,7 @@ int choose_move(move_t* move, int maxdepth)
     if (n == 0) return -1;
     srand(0);
     *move = bestmoves[rand() % n];
-    if (bestscore > INF - 100) // AIの勝利
+    if (bestscore > INF - 1000) // AIの勝利
         return 1;
     return 0;
 }
@@ -274,7 +274,7 @@ void judge_nextmove_sennichite()
             entry = tt_search();
             if (!entry)
                 entry = tt_insert();
-            entry->score = (loser == USER) ? INF : -INF;
+            entry->score = (loser == USER) ? INF - 1 : -INF + 1;
         }
         undo_move(mnode->move, 1);
         mnode = mnode->next;
