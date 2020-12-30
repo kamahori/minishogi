@@ -206,11 +206,41 @@ int choose_move(move_t* move, int maxdepth)
 	return 0;
 }
 
+// 千日手かどうかの判定（深さ1の手のみ）
+void judge_nextmove_sennichite()
+{
+	TTEntry* entry = tt_search();
+	if (!entry) { // 未探索
+		entry = tt_insert();
+	}
+	if (!(entry->movelist)) {
+		int res = expand_node(&(entry->movelist));
+		if (!res) return;
+	}
+	MNode* mnode = entry->movelist;
+	int loser;
+	while (mnode) {
+		do_move(mnode->move, 1);
+		loser = judge_sennichite();
+		if (loser) {
+			entry = tt_search();
+			if (!entry)
+				entry = tt_insert();
+			entry->score = (loser == USER) ? INF : -INF;
+		}
+		undo_move(mnode->move, 1);
+		mnode = mnode->next;
+	}
+}
+
 // 指せる手がなければ-1を返す
 int compute_output(move_t* move)
 {
 	int depthlimit = 6;
 	int res;
+	
+	judge_nextmove_sennichite();
+
 	for (int maxdepth = 3; maxdepth <= depthlimit; maxdepth++) {
 		res = choose_move(move, maxdepth);
 		if (res != 0)
