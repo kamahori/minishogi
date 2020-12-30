@@ -766,7 +766,6 @@ int main(int argc, char* argv[]) {
             if (DEBUG) printf("computer(P%d)'s turn: ", (AI == P1) ? 1 : 2);
             res = compute_output(&move);
             if (res == -1) youWin();
-            print_move(move);
             do_move(move, 1);
             if (DEBUG) print();
             loser = judge_sennichite();

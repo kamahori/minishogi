@@ -448,3 +448,27 @@ int get_movelist(move_t* movelist)
     return i;
 }
 
+// 相手の王を取る手の一つを move に代入
+// 返り値　1：成功、0：失敗
+int capture_OU(move_t* move)
+{
+    int turn = g_board.turn;
+    BitBoard frombb, tobb;
+    BitBoard opp_OU = g_board.piecebb[playeridx(turn)][pieceidx(OU)]; // 相手の王の場所
+
+    move->to = opp_OU;
+    move->take = OU;
+    move->promoting = 0;
+    for (int piece = 1; piece <= 10; piece++) {
+        frombb = g_board.piecebb[playeridx(turn)][pieceidx(piece)];
+        for (BitBoard f = frombb & -frombb; frombb; frombb ^= f, f = frombb & -frombb) {
+            tobb = get_movable(piece, f, turn);
+            if (tobb & opp_OU) { // 王が取れる
+                move->from = f;
+                move->piece = piece;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}

@@ -8,28 +8,6 @@
 #include "bitboard.h"
 #include "sennichite.h"
 
-void ai_print_move(move_t move)
-{
-    if (move.from != 0) { // 動かす
-        int fromsq = square(move.from), tosq = square(move.to);
-        printf("%c%c%c%c", '1' + fromsq / 5, 'A' + fromsq % 5, '1' + tosq / 5, 'A' + tosq % 5);
-        if (move.promoting)
-            printf("N");
-    }
-    else { // 打つ
-        int tosq = square(move.to);
-        printf("%c%c", '1' + tosq / 5, 'A' + tosq % 5);
-        switch (move.piece) {
-        case FU: printf("FU"); break;
-        case GI: printf("GI"); break;
-        case KK: printf("KK"); break;
-        case HI: printf("HI"); break;
-        case KI: printf("KI"); break;
-        case OU: printf("OU"); break;
-        }
-    }
-}
-
 #define INF 1000000000
 
 const int piece_value[10] = { // 盤面上の駒の評価値（暫定値）
@@ -215,45 +193,6 @@ int alphabeta(int depth, int maxdepth, int alpha, int beta)
     return bestscore;
 }
 
-// score が最大となる手をランダムに選ぶ
-// 返り値　-1：指せる手無し、1：AIの勝利、0：その他
-int choose_move(move_t* move, int maxdepth)
-{
-    // printf("\nmaxdepth = %d\n", maxdepth);
-    int bestscore = alphabeta(0, maxdepth, -INF, INF);
-    // printf("bestscore: %d\n", bestscore);
-
-    TTEntry* entry = tt_search();
-    if (!entry) {
-        if (bestscore > INF - 1000)
-            return 1;
-        return 0;
-    }
-    if (!(entry->movelist))
-        return -1;
-
-    sort_movelist(&(entry->movelist));
-    MNode* mnode = entry->movelist;
-
-    move_t bestmoves[50];
-    int n = 0;
-    while (mnode) {
-        if (mnode->score == bestscore) {
-            // printf("move: ");
-            // ai_print_move(mnode->move);
-            // printf(", score: %d\n", mnode->score);
-            bestmoves[n++] = mnode->move;
-        }
-        mnode = mnode->next;
-    }
-    if (n == 0) return -1;
-    srand(0);
-    *move = bestmoves[rand() % n];
-    if (bestscore > INF - 1000) // AIの勝利
-        return 1;
-    return 0;
-}
-
 // 千日手かどうかの判定（深さ1の手のみ）
 void judge_nextmove_sennichite()
 {
@@ -281,22 +220,67 @@ void judge_nextmove_sennichite()
     }
 }
 
-// 指せる手がなければ-1を返す
+// 反復深化 alpha-beta 探索（深さ depthlimit まで）による最善手を move に代入
+// 返り値　1：成功、-1：指し手無し
+int choose_move(move_t* move, int depthlimit)
+{
+    judge_nextmove_sennichite();
+
+    int bestscore = 0;
+    for (int maxdepth = 3; maxdepth <= depthlimit; maxdepth++) {
+        // printf("\nmaxdepth = %d\n", maxdepth);
+        bestscore = alphabeta(0, maxdepth, -INF, INF);
+        // printf("bestscore: %d\n", bestscore);
+        if (bestscore > INF - 1000) // AIの勝利
+            break;
+    }
+
+    TTEntry* entry = tt_search();
+    if (!entry) {
+        TTEntry* entry = tt_insert();
+        expand_node(&(entry->movelist));
+    }
+    if (!(entry->movelist)) // 指せる手がない
+        return -1;
+
+    // 王を取る手を探す
+    MNode* mnode = entry->movelist;
+    while (mnode) {
+        if (mnode->move.take == OU) {
+            *move = mnode->move;
+            return 1;
+        }
+        mnode = mnode->next;
+    }
+
+    // score が最大となる手をランダムに選ぶ
+    mnode = entry->movelist;
+    move_t bestmoves[50];
+    int n = 0;
+    while (mnode) {
+        if (mnode->score == bestscore) {
+            bestmoves[n++] = mnode->move;
+        }
+        mnode = mnode->next;
+    }
+    srand(0);
+    *move = bestmoves[rand() % n];
+    return 1;
+}
+
+void print_move(move_t move);
+
+// 次の手を求めて表示する
+// 返り値　1：成功、-1：指し手無し
 int compute_output(move_t* move)
 {
     int depthlimit = 7;
-    int res;
 
     clock_t start, end;
     start = clock();
 
-    judge_nextmove_sennichite();
-
-    for (int maxdepth = 3; maxdepth <= depthlimit; maxdepth++) {
-        res = choose_move(move, maxdepth);
-        if (res != 0)
-            break;
-    }
+    int res = choose_move(move, depthlimit);
+    if (res == 1) print_move(*move);
 
     end = clock();
     if (DEBUG) printf("time: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
