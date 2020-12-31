@@ -61,7 +61,7 @@ int eval(int turn)
     BitBoard opp_OU = g_board.piecebb[playeridx(-turn)][pieceidx(OU)];
     int sq = square(opp_OU);
     int row = sq / 5, col = sq % 5;
-
+    /*
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             int piece = g_board.state[i][j];
@@ -70,8 +70,8 @@ int eval(int turn)
             if (dist == 0) continue;
             score += (int) dist_value[pieceidx(piece)] / dist;
         }
-    }
-    /*
+    }*/
+    
     //しょぼい駒で王を追い詰めてる方がコスパ良いかも？と思ったので、valueを固定値にしたバージョン
     int value = 80; //暫定値
     BitBoard movable = 0;
@@ -112,7 +112,7 @@ int eval(int turn)
                 }
             }
         }
-    }*/
+    }
 
     return score;
 }
