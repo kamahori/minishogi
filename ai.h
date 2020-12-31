@@ -65,7 +65,7 @@ int eval(int turn)
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             int piece = g_board.state[i][j];
-            if (piece == EMPTY || playeridx(piece) != turn) continue;
+            if (piece == EMPTY || piece * turn < 0) continue;
             int dist = abs(row - i) + abs(col - j); // 相手の王とのマンハッタン距離
             if (dist == 0) continue;
             score += (int) dist_value[pieceidx(piece)] / dist;
@@ -80,8 +80,18 @@ int eval(int turn)
         for (int j = 0; j < 5; j++) {
             int piece = g_board.state[i][j];
             if (piece == EMPTY) continue;
-            else if (playeridx(piece) != turn){
-                movable = movable | get_movable(abs(piece), bitboard(5*i+j), playeridx(-turn));
+            else if (piece * turn < 0){
+                movable = movable | get_movable(abs(piece), bitboard(5*i+j), 
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                (-turn));
                 continue;
             }
             int manhattan_dist = abs(row - i) + abs(col - j); // 相手の王とのマンハッタン距離
@@ -103,7 +113,7 @@ int eval(int turn)
     for (int i=0; i<5; i++){
         for (int j=0; j<5; j++){
             int piece = g_board.state[i][j];
-            if (piece == EMPTY || playeridx(piece) != turn) continue;
+            if (piece == EMPTY || piece * turn < 0) continue;
             else{
                 //自分のこまが見つかったら、
                 if (popcount(movable & bitboard(5*i+j)) > 0){
