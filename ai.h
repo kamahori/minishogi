@@ -81,17 +81,7 @@ int eval(int turn)
             int piece = g_board.state[i][j];
             if (piece == EMPTY) continue;
             else if (piece * turn < 0){
-                movable = movable | get_movable(abs(piece), bitboard(5*i+j), 
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                (-turn));
+                movable = movable | get_movable(abs(piece), bitboard(5*i+j), (-turn));
                 continue;
             }
             int manhattan_dist = abs(row - i) + abs(col - j); // 相手の王とのマンハッタン距離
