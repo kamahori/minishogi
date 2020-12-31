@@ -73,6 +73,30 @@ int eval(int turn)
             score += (int) dist_value[pieceidx(piece)] / dist;
         }
     }
+    /*
+    //しょぼい駒で王を追い詰めてる方がコスパ良いかも？と思ったので、valueを固定値にしたバージョン
+    int value = 80; //暫定値
+
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            int piece = g_board.state[i][j];
+            if (piece == EMPTY || playeridx(piece) != turn) continue;
+            int manhattan_dist = abs(row - i) + abs(col - j); // 相手の王とのマンハッタン距離
+            int chebyshev_dist = max(abs(row - i), abs(col - j)); // 相手の王とのチェビシェフ距離
+            if (manhattan_dist == 0) continue;
+            if (piece == FU) score += (int) value / manhattan_dist;
+            else if (piece == KK || piece == promote(KK)){
+                if (abs(abs(row - i) - abs(col - j)) <= 1) score += value / 2;
+                //評価値が大きくなりすぎないように2で割っとく。
+            }
+            else if (piece == HI || piece == promote(HI)){
+                if (min(abs(row - i),  abs(col - j)) <= 1) score += value / 2;
+                //評価値が大きくなりすぎないように2で割っとく
+            }
+            else if (piece == OU) continue; //王で王を取りに行くのは考えない。
+            else score += value / chebyshev_dist;
+        }
+    }*/
 
     return score;
 }
