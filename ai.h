@@ -60,7 +60,7 @@ int eval(int turn)
         score += g_board.hand[playeridx(turn)][p] * handpiece_value[p];
     }
 
-    BitBoard opp_OU = g_board.piecebb[playeridx(turn)][pieceidx(OU)];
+    BitBoard opp_OU = g_board.piecebb[playeridx(-turn)][pieceidx(OU)];
     int sq = square(opp_OU);
     int row = sq / 5, col = sq % 5;
 
@@ -255,7 +255,7 @@ int choose_move(move_t* move, int depthlimit)
     judge_nextmove_sennichite();
 
     int bestscore = 0;
-    for (int maxdepth = 5; maxdepth <= depthlimit; maxdepth++) {
+    for (int maxdepth = 3; maxdepth <= depthlimit; maxdepth++) {
         // printf("\nmaxdepth = %d\n", maxdepth);
         bestscore = alphabeta(0, maxdepth, -INF, INF);
         // printf("bestscore: %d\n", bestscore);
