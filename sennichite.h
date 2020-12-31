@@ -173,12 +173,6 @@ int judge_sennichite()
     return P1; // 先手の負け
 }
 
-/*
-typedef struct mnode_t {
-    move_t move;
-    int score;
-    struct mnode_t* next;
-} MNode;*/
 
 typedef struct {
     int state; // state のハッシュ値
@@ -189,7 +183,7 @@ typedef struct {
     move_t bestmove; // 最善手
 } TTEntry; // entry of transposition table
 
-#define TT_SIZE (1 << 27)
+#define TT_SIZE (1 << 30)
 #define tt_hash(key) ((key)&(TT_SIZE-1))
 #define tt_rehash(key) ((key+1)&(TT_SIZE-1))
 

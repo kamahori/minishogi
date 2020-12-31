@@ -61,7 +61,7 @@ int eval(int turn)
     BitBoard opp_OU = g_board.piecebb[playeridx(-turn)][pieceidx(OU)];
     int sq = square(opp_OU);
     int row = sq / 5, col = sq % 5;
-    /*
+    
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             int piece = g_board.state[i][j];
@@ -70,7 +70,7 @@ int eval(int turn)
             if (dist == 0) continue;
             score += (int) dist_value[pieceidx(piece)] / dist;
         }
-    }*/
+    }
     
     //しょぼい駒で王を追い詰めてる方がコスパ良いかも？と思ったので、valueを固定値にしたバージョン
     int value = 80; //暫定値
@@ -116,64 +116,8 @@ int eval(int turn)
 
     return score;
 }
-/*
-#define NOT_SEARCHED (INF + 10000)
 
-// 次の手をリストにして格納
-// 返り値　1：成功、0：失敗
-int expand_node(MNode** mlist)
-{
-    move_t movelist[200];
-    int n = get_movelist(movelist);
-    if (n == 0)
-        return 0;
-    MNode** mnode_plist = (MNode**)malloc(sizeof(MNode*) * n);
-    for (int i = 0; i < n; i++) {
-        mnode_plist[i] = (MNode*)malloc(sizeof(MNode));
-        mnode_plist[i]->move = movelist[i];
-        mnode_plist[i]->score = NOT_SEARCHED; // 未探索時の値
-        mnode_plist[i]->next = *mlist;
-        *mlist = mnode_plist[i];
-    }
-    return 1;
-}
 
-// movelist の要素を score の順に並び替える（挿入ソート）
-// AIの手番では大きい順、USERの手番では小さい順
-void sort_movelist(MNode** movelist)
-{
-    int is_ai = (g_board.turn == AI);
-    if (!*movelist) return;
-    MNode* mnode, * next_mn, * mn, * prev_mn;
-    mnode = (*movelist)->next;
-    (*movelist)->next = NULL;
-    while (mnode) {
-        if (mnode->score == NOT_SEARCHED) { // 以降は未探索
-            mn = *movelist;
-            while (mn->next) mn = mn->next;
-            mn->next = mnode;
-            return;
-        }
-        next_mn = mnode->next;
-        prev_mn = mn = *movelist;
-        while (mn) {
-            if (is_ai ? (mn->score <= mnode->score) : (mn->score >= mnode->score)) {
-                if (mn == *movelist) *movelist = mnode;
-                else prev_mn->next = mnode;
-                mnode->next = mn;
-                break;
-            }
-            prev_mn = mn;
-            mn = mn->next;
-        }
-        if (!mn) {
-            prev_mn->next = mnode;
-            mnode->next = NULL;
-        }
-        mnode = next_mn;
-    }
-}
-*/
 int alphabeta(int depth, int maxdepth, int alpha, int beta)
 {
     int turn = g_board.turn;
@@ -362,7 +306,7 @@ int choose_move(move_t* move, int depthlimit)
 // 返り値　1：成功、-1：指し手無し
 int compute_output(move_t* move)
 {
-    int depthlimit = 7;
+    int depthlimit = 8;
 
     clock_t start, end;
     start = clock();
