@@ -365,7 +365,7 @@ int judge_tsumibb()
     int n = get_movelist(movelist, 200);
     for (int i = 0; i < n; i++) {
         do_move(movelist[i], 0);
-        if (!judge_checking(-g_board.turn)) { // 現在の手番のプレイヤーが手を指して相手が勝たない
+        if (!judge_checking(g_board.turn)) { // 現在の手番のプレイヤーが手を指して相手が勝たない
             undo_move(movelist[i], 0);
             return 0;
         }
