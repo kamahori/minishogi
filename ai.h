@@ -74,11 +74,16 @@ int eval(int turn)
     /*
     //しょぼい駒で王を追い詰めてる方がコスパ良いかも？と思ったので、valueを固定値にしたバージョン
     int value = 80; //暫定値
+    BitBoard movable = 0;
 
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             int piece = g_board.state[i][j];
-            if (piece == EMPTY || playeridx(piece) != turn) continue;
+            if (piece == EMPTY) continue;
+            else if (playeridx(piece) != turn){
+                movable = movable | get_movable(abs(piece), bitboard(5*i+j), playeridx(-turn));
+                continue;
+            }
             int manhattan_dist = abs(row - i) + abs(col - j); // 相手の王とのマンハッタン距離
             int chebyshev_dist = max(abs(row - i), abs(col - j)); // 相手の王とのチェビシェフ距離
             if (manhattan_dist == 0) continue;
@@ -93,17 +98,6 @@ int eval(int turn)
             }
             else if (piece == OU) continue; //王で王を取りに行くのは考えない。
             else score += value / chebyshev_dist;
-        }
-    }
-    BitBoard movable = 0;
-    for (int i=0; i<5; i++){
-        for (int j=0; j<5; j++){
-            int piece = g_board.state[i][j];
-            if (piece == EMPTY || playeridx(piece) == turn) continue;
-            else{
-                //相手のこまが見つかったら、
-                movable = movable | get_movable(abs(piece), bitboard(5*i+j), playeridx(-turn));
-            }
         }
     }
     for (int i=0; i<5; i++){
