@@ -8,8 +8,6 @@
 #include "bitboard.h"
 #include "sennichite.h"
 
-#define INF 1000000000
-
 const int piece_value[10] = { // 盤面上の駒の評価値（暫定値）
     10,     // 歩
     40,     // 銀
@@ -100,7 +98,7 @@ int eval(int turn)
 
     return score;
 }
-
+/*
 #define NOT_SEARCHED (INF + 10000)
 
 // 次の手をリストにして格納
@@ -157,7 +155,7 @@ void sort_movelist(MNode** movelist)
         mnode = next_mn;
     }
 }
-
+*/
 int alphabeta(int depth, int maxdepth, int alpha, int beta)
 {
     int turn = g_board.turn;
@@ -165,80 +163,133 @@ int alphabeta(int depth, int maxdepth, int alpha, int beta)
         return INF - depth;
     if (turn == USER && judge_checking(USER)) // USERが必ず勝つ
         return -INF + depth;
+    if (depth >= maxdepth)
+        return eval(AI) - eval(USER);
 
-    int bestscore = (turn == AI) ? -INF - 100 : INF + 100;
+    int lower, upper;
     TTEntry* entry = tt_search();
     if (!entry) { // 未探索
         entry = tt_insert();
-        if (depth >= maxdepth) // 末端局面
-            return entry->score; // = eval()
+        lower = -INF;
+        upper = INF;
     }
     else { // 探索済み
-        int searched_score = entry->score;
-        if (depth >= maxdepth || abs(searched_score) > INF - 1000) { // 末端局面か勝敗の確定している局面
-            return searched_score;
-        }
-        if (entry->searched_depth >= maxdepth - depth) { // より深くまで探索しているため利用する
-            if (!(entry->ispruned)) {
-                return searched_score; // 枝刈りされていない正確な評価値
-            }
-            if (turn == AI) {
-                if (searched_score >= beta) {
-                    return searched_score; // beta cut
-                }
-                bestscore = searched_score;
-                alpha = max(alpha, searched_score);
-            }
+        lower = entry->lower;
+        upper = entry->upper;
+        if (entry->searched_depth == maxdepth - depth) { // 同じ局面を同じ深さで探索済み
+            if (lower == upper) return lower;
+            else if (lower >= beta) return lower;
+            else if (upper <= alpha) return upper;
             else {
-                if (searched_score <= alpha) {
-                    return searched_score; // alpha cut
-                }
-                bestscore = searched_score;
-                beta = min(beta, searched_score);
+                alpha = max(alpha, lower);
+                beta = min(beta, upper);
             }
         }
     }
 
-    if (!(entry->movelist)) {
-        int res = expand_node(&(entry->movelist));
-        if (!res)
-            return bestscore;
-    }
-    else {
-        sort_movelist(&(entry->movelist)); // 評価値の順に並び替える
-    }
+    int bestscore = (turn == AI) ? -INF - 100 : INF + 100;
 
-    MNode* mnode = entry->movelist;
+    move_t movelist[100];
+    int n = get_movelist(movelist, 100);
+    if (n == 0) return bestscore;
+
+    move_t move;
     int score;
-    int ispruned = 0;
-    while (mnode) { // for each move
-        do_move(mnode->move, 1);
-        score = alphabeta(depth + 1, maxdepth, alpha, beta);
-        undo_move(mnode->move, 1);
-        mnode->score = score;
+    for (int i = -1; i < n; i++) { // for each move
+        move = (i == -1) ? entry->bestmove : movelist[i]; // 最初に最善手で探索して探索範囲を狭める
+        do_move(move, 1);
+        if (turn == AI)
+            score = alphabeta(depth + 1, maxdepth, max(alpha, bestscore), beta);
+        else
+            score = alphabeta(depth + 1, maxdepth, alpha, min(beta, bestscore));
+        undo_move(move, 1);
+
         if (turn == AI) {
-            bestscore = max(bestscore, score);
+            if (bestscore < score) {
+                bestscore = score;
+                entry->bestmove = move;
+            }
             if (bestscore >= beta) {
-                ispruned = 1;
                 break; // beta cut
             }
-            alpha = max(alpha, bestscore);
         }
         else {
-            bestscore = min(bestscore, score);
+            if (bestscore > score) {
+                bestscore = score;
+                entry->bestmove = move;
+            }
             if (bestscore <= alpha) {
-                ispruned = 1;
                 break; // alpha cut
             }
-            beta = min(beta, bestscore);
         }
-
-        mnode = mnode->next;
     }
 
-    entry->score = bestscore;
-    entry->ispruned = ispruned;
+    if (bestscore <= alpha) {
+        entry->lower = lower;
+        entry->upper = bestscore;
+    }
+    else if (bestscore >= beta) {
+        entry->lower = bestscore;
+        entry->upper = upper;
+    }
+    else {
+        entry->lower = entry->upper = bestscore;
+    }
+
     entry->searched_depth = maxdepth - depth;
+
+    return bestscore;
+}
+
+void print_move(move_t move);
+
+int alphabeta_init(move_t* ret, int maxdepth)
+{
+    if (judge_checking(AI)) // AIが必ず勝つ
+        return INF;
+    if (maxdepth <= 0)
+        return eval(AI) - eval(USER);
+
+    int lower, upper;
+    TTEntry* entry = tt_search();
+    if (!entry) { // 未探索
+        entry = tt_insert();
+    }
+    else { // 探索済み
+        lower = entry->lower;
+        upper = entry->upper;
+        if (entry->searched_depth == maxdepth) { // 同じ局面を同じ深さで探索済み
+            if (lower == upper)
+                return lower;
+        }
+    }
+
+    int bestscore = -INF - 100;
+
+    move_t movelist[100];
+    int n = get_movelist(movelist, 100);
+    if (n == 0) return bestscore;
+
+    move_t move;
+    int score;
+    for (int i = -1; i < n; i++) { // for each move
+        move = (i == -1) ? entry->bestmove : movelist[i]; // 最初に最善手で探索して探索範囲を狭める
+        do_move(move, 1);
+        score = alphabeta(1, maxdepth, -INF, INF);
+        undo_move(move, 1);
+
+        // printf("move: ");
+        // print_move(move);
+        // printf(", score: %d\n", score);
+        if (bestscore < score) {
+            bestscore = score;
+            *ret = entry->bestmove = move;
+        }
+    }
+
+    entry->lower = entry->upper = bestscore;
+
+    entry->searched_depth = maxdepth;
 
     return bestscore;
 }
@@ -250,23 +301,20 @@ void judge_nextmove_sennichite()
     if (!entry) { // 未探索
         entry = tt_insert();
     }
-    if (!(entry->movelist)) {
-        int res = expand_node(&(entry->movelist));
-        if (!res) return;
-    }
-    MNode* mnode = entry->movelist;
+
+    move_t movelist[200];
+    int n = get_movelist(movelist, 200);
     int loser;
-    while (mnode) {
-        do_move(mnode->move, 1);
+    for (int i = 0; i < n; i++) {
+        do_move(movelist[i], 1);
         loser = judge_sennichite();
         if (loser) {
             entry = tt_search();
             if (!entry)
                 entry = tt_insert();
-            entry->score = (loser == USER) ? INF - 1 : -INF + 1;
+            entry->lower = entry->upper = (loser == USER) ? INF - 1 : -INF + 1;
         }
-        undo_move(mnode->move, 1);
-        mnode = mnode->next;
+        undo_move(movelist[i], 1);
     }
 }
 
@@ -281,45 +329,14 @@ int choose_move(move_t* move, int depthlimit)
     int bestscore = 0;
     for (int maxdepth = 3; maxdepth <= depthlimit; maxdepth++) {
         // printf("\nmaxdepth = %d\n", maxdepth);
-        bestscore = alphabeta(0, maxdepth, -INF, INF);
+        bestscore = alphabeta_init(move, maxdepth);
         // printf("bestscore: %d\n", bestscore);
+
         if (bestscore > INF - 1000) // AIの勝利
             break;
     }
+    if (bestscore == -INF - 100) return -1; // 指せる手がない
 
-    TTEntry* entry = tt_search();
-    if (!entry) {
-        TTEntry* entry = tt_insert();
-        expand_node(&(entry->movelist));
-    }
-    if (!(entry->movelist)) // 指せる手がない
-        return -1;
-
-    // 王を取る手を探す
-    MNode* mnode = entry->movelist;
-    while (mnode) {
-        if (mnode->move.take == OU) {
-            *move = mnode->move;
-            return 1;
-        }
-        mnode = mnode->next;
-    }
-
-    // score が最大となる手をランダムに選ぶ
-    mnode = entry->movelist;
-    move_t bestmoves[50];
-    int n = 0;
-    while (mnode) {
-        // printf("move: ");
-        // print_move(mnode->move);
-        // printf(", score: %d\n", mnode->score);
-        if (mnode->score == bestscore) {
-            bestmoves[n++] = mnode->move;
-        }
-        mnode = mnode->next;
-    }
-    srand(0);
-    *move = bestmoves[rand() % n];
     return 1;
 }
 

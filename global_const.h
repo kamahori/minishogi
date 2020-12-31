@@ -10,6 +10,8 @@ int DEBUG = 0;
 #define playeridx(p) ((p>0)?0:1) // P1の駒なら0、P2の駒なら1。hand と piecebb の配列参照用
 #define pieceidx(p) (abs(p)-1) // 駒の絶対値-1。hand と piecebb の配列参照用
 
+#define INF 1000000000
+
 //P1: 先手, P2: 後手
 const int P1 = 1;
 const int P2 = -1;

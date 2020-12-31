@@ -356,13 +356,13 @@ int judge_checking(int turn)
     return g_board.piecebb[playeridx(-turn)][pieceidx(OU)] & get_all_movable(turn);
 }
 
-int get_movelist(move_t* movelist);
+int get_movelist(move_t* movelist, int maxi);
 
 // 現在の手番のプレイヤーが詰んでいるか
 int judge_tsumibb()
 {
     move_t movelist[200];
-    int n = get_movelist(movelist);
+    int n = get_movelist(movelist, 200);
     for (int i = 0; i < n; i++) {
         do_move(movelist[i], 0);
         if (!judge_checking(-g_board.turn)) { // 現在の手番のプレイヤーが手を指して相手が勝たない
@@ -374,9 +374,9 @@ int judge_tsumibb()
     return 1;
 }
 
-// 現在の局面での可能な手を movelist に入れる
+// 現在の局面での可能な手を movelist に入れる（最大 maxi 手）
 // 可能な手の数を返す
-int get_movelist(move_t* movelist)
+int get_movelist(move_t* movelist, int maxi)
 {
     int i = 0;
     BitBoard frombb, tobb;
@@ -402,6 +402,7 @@ int get_movelist(move_t* movelist)
                 else
                     move.promoting = 0;
                 movelist[i++] = move;
+                if (i >= maxi) return i;
                 if (piece == GI && (in_opp_area(f) || in_opp_area(t))) { // 銀は成る手と成らない手を両方考慮する
                     move.from = f;
                     move.to = t;
@@ -409,6 +410,7 @@ int get_movelist(move_t* movelist)
                     move.promoting = 1;
                     move.take = abs(g_board.state[square(t) / 5][square(t) % 5]);
                     movelist[i++] = move;
+                    if (i >= maxi) return i;
                 }
             }
         }
@@ -441,6 +443,7 @@ int get_movelist(move_t* movelist)
                     }
                 }
                 movelist[i++] = move;
+                if (i >= maxi) return i;
             }
         }
     }
@@ -470,5 +473,65 @@ int capture_OU(move_t* move)
             }
         }
     }
+    return 0;
+}
+
+// 現在の局面での可能な手のうち適当な一つを move に代入（entry->bestmove の初期化用）
+// 返り値　1：成功、0：失敗
+int get_onemove(move_t* move)
+{
+    BitBoard frombb, tobb;
+    int turn = g_board.turn;
+    BitBoard opp_all_movable = get_all_movable(-turn); // 相手の駒の利き
+
+    // 動かす
+    for (int piece = 1; piece <= 10; piece++) {
+        frombb = g_board.piecebb[playeridx(turn)][pieceidx(piece)];
+        for (BitBoard f = frombb & -frombb; frombb; frombb ^= f, f = frombb & -frombb) {
+            tobb = get_movable(piece, f, turn);
+            if (piece == OU)
+                tobb &= ~opp_all_movable; // 王は相手の利きがある場所には動かせない
+            for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
+                move->from = f;
+                move->to = t;
+                move->piece = piece;
+                move->take = abs(g_board.state[square(t) / 5][square(t) % 5]);
+                if ((piece == FU || piece == KK || piece == HI) && (in_opp_area(f) || in_opp_area(t)))
+                    move->promoting = 1; // 歩、角、飛は成れれば必ず成る
+                else
+                    move->promoting = 0;
+                return 1;
+            }
+        }
+    }
+
+    // 打つ
+    for (int piece = 5; piece > 0; piece--) {
+        if (g_board.hand[playeridx(turn)][pieceidx(piece)]) {
+            tobb = empty();
+            for (BitBoard t = tobb & -tobb; tobb; tobb ^= t, t = tobb & -tobb) {
+                move->from = 0; // 打つ場合は from = 0
+                move->to = t;
+                move->piece = piece;
+                move->take = EMPTY;
+                move->promoting = 0;
+                if (piece == FU) {
+                    if (in_opp_area(t) // 敵陣に歩
+                        || (g_board.piecebb[playeridx(turn)][pieceidx(FU)] & columnbb(t))) // 二歩
+                        continue;
+                    if (get_movable(piece, t, turn) & g_board.piecebb[playeridx(-turn)][pieceidx(OU)]) { // 王の前に歩
+                        do_move(*move, 0);
+                        if (judge_tsumibb()) { // 打ち歩詰め
+                            undo_move(*move, 0);
+                            continue;
+                        }
+                        undo_move(*move, 0);
+                    }
+                }
+                return 1;
+            }
+        }
+    }
+
     return 0;
 }

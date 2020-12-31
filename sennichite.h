@@ -173,20 +173,20 @@ int judge_sennichite()
     return P1; // 先手の負け
 }
 
-
+/*
 typedef struct mnode_t {
     move_t move;
     int score;
     struct mnode_t* next;
-} MNode;
+} MNode;*/
 
 typedef struct {
     int state; // state のハッシュ値
     int hand; // hand のハッシュ値
-    int score; // 局面の評価値
-    int ispruned; // 枝刈りされたかどうか
+    int lower; // 局面の評価値の下限
+    int upper; // 局面の評価値の上限
     int searched_depth; // 探索した深さ
-    MNode* movelist; // 次の手のリスト
+    move_t bestmove; // 最善手
 } TTEntry; // entry of transposition table
 
 #define TT_SIZE (1 << 27)
@@ -214,7 +214,7 @@ TTEntry* tt_search()
     return NULL;
 }
 
-int eval(int turn);
+int get_onemove(move_t* move);
 
 TTEntry* tt_insert()
 {
@@ -230,10 +230,10 @@ TTEntry* tt_insert()
     }
     entry->state = state_h;
     entry->hand = hand_h;
-    entry->score = eval(AI) - eval(USER);
-    entry->ispruned = 0;
+    entry->lower = -INF;
+    entry->upper = INF;
     entry->searched_depth = 0;
-    entry->movelist = NULL;
+    get_onemove(&(entry->bestmove));
     TTable[index] = entry;
     return entry;
 }
@@ -243,7 +243,7 @@ void print_tt()
     printf("TTable:\n");
     for (int i = 0; i < TT_SIZE; i++) {
         if (TTable[i])
-            printf("state: %d, hand: %d, score: %d, searched_depth: %d\n", TTable[i]->state, TTable[i]->hand, TTable[i]->score, TTable[i]->searched_depth);
+            printf("state: %d, hand: %d, lower: %d, upper: %d, searched_depth: %d\n", TTable[i]->state, TTable[i]->hand, TTable[i]->lower, TTable[i]->upper, TTable[i]->searched_depth);
     }
 }
 
