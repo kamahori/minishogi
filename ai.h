@@ -94,6 +94,30 @@ int eval(int turn)
             else if (piece == OU) continue; //王で王を取りに行くのは考えない。
             else score += value / chebyshev_dist;
         }
+    }
+    BitBoard movable = 0;
+    for (int i=0; i<5; i++){
+        for (int j=0; j<5; j++){
+            int piece = g_board.state[i][j];
+            if (piece == EMPTY || playeridx(piece) == turn) continue;
+            else{
+                //相手のこまが見つかったら、
+                movable = movable | get_movable(abs(piece), bitboard(5*i+j), playeridx(-turn));
+            }
+        }
+    }
+    for (int i=0; i<5; i++){
+        for (int j=0; j<5; j++){
+            int piece = g_board.state[i][j];
+            if (piece == EMPTY || playeridx(piece) != turn) continue;
+            else{
+                //自分のこまが見つかったら、
+                if (popcount(movable & bitboard(5*i+j)) > 0){
+                    //相手の動ける範囲にいたら、
+                    score -= piece_value[pieceidx(piece)];
+                }
+            }
+        }
     }*/
 
     return score;
