@@ -8,7 +8,7 @@
 
 int hash_seed[21][25];
 #define hashidx(p) ((p)+10) // 駒に対応する配列の index。hash_seed[10] は使わない
-#define hand_hash_seed(turn, piece) (1<<((turn)*12+(piece)*2))
+#define hand_hash_seed(turn, piece) (1<<((turn+1)/2*12+(piece-1)*2))
 
 void hash_init()
 {
@@ -36,9 +36,9 @@ int hash_state()
 int hash_hand()
 {
     int hash = 0;
-    for (int turn = 0; turn < 2; turn++) {
-        for (int piece = 0; piece < 6; piece++) {
-            hash += g_board.hand[turn][piece] * hand_hash_seed(turn, piece);
+    for (int turn = -1; turn <= 1; turn += 2) {
+        for (int piece = 1; piece <= 6; piece++) {
+            hash += g_board.hand[playeridx(turn)][pieceidx(piece)] * hand_hash_seed(turn, piece);
         }
     }
     return hash;
